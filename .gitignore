@@ -1,0 +1,19 @@
+# Java / Spring Boot
+target/
+*.class
+.idea/
+*.iml
+.mvn/wrapper/maven-wrapper.properties
+help.md
+
+# Node / React
+node_modules/
+dist/
+build/
+.env
+.env.local
+.DS_Store
+package-lock.json
+
+# Logs
+*.log
