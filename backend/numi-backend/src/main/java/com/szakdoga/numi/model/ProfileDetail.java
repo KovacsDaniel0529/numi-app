@@ -17,10 +17,10 @@ import lombok.NoArgsConstructor;
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
-        // Ez került át ide, ahogy kérted:
+        
         private String firstName;
 
-        // Itt használjuk a nagybetűs Integer/Double-t, mert ezek lehetnek üresek kezdetben!
+       
         private Integer age;
 
         private Double weight; // kg
@@ -31,7 +31,7 @@ import lombok.NoArgsConstructor;
 
         private String goal; // lose, maintain, gain
 
-        // --- A KULCS (Foreign Key) ---
+        
         // Ez a mező fogja összekötni a Userrel.
         // Az adatbázisban lesz egy "user_id" oszlop ebben a táblában.
         @OneToOne
