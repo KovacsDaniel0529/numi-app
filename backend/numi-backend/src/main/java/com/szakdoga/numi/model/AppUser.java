@@ -6,10 +6,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "app_users") // A tábla neve 'foods' lesz
-@Data // Lombok: Generál gettereket, settereket helyetted
-@NoArgsConstructor // Kell a JPA-nak egy üres konstruktor
-@AllArgsConstructor // Generál egy konstruktort minden paraméterrel
+@Table(name = "app_users") 
+@Data 
+@NoArgsConstructor 
+@AllArgsConstructor 
 public class  AppUser extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,10 +23,8 @@ public class  AppUser extends BaseEntity {
 
     @Column(nullable = false)
     private String password;
-
-    // --- A KAPCSOLAT ---
+    
     // Itt mondjuk meg, hogy ehhez a userhez tartozik egy profil.
-    // A "mappedBy" azt jelenti: "Nem én tárolom a kulcsot, hanem a másik osztály 'user' mezője."
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private ProfileDetail profileDetail;
 }
