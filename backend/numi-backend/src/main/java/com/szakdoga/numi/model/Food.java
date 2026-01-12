@@ -5,11 +5,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-@Entity // Ez mondja meg, hogy ebből Adatbázis Tábla legyen
-@Table(name = "foods") // A tábla neve 'foods' lesz
-@Data // Lombok: Generál gettereket, settereket helyetted
-@NoArgsConstructor // Kell a JPA-nak egy üres konstruktor
-@AllArgsConstructor // Generál egy konstruktort minden paraméterrel
+@Entity 
+@Table(name = "foods") 
+@Data 
+@NoArgsConstructor 
+@AllArgsConstructor
 public class Food {
 
     @Id
@@ -26,7 +26,7 @@ public class Food {
 
     private double fat; // Zsír
 
-    // Ide jöhet majd később:
+    
     // private boolean isGlutenFree;
     // private boolean isLactoseFree;
 }
