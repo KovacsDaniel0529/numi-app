@@ -11,7 +11,7 @@ public class UserMapper {
     public UserMapper(ProfileMapper profileMapper) {
         this.profileMapper = profileMapper;
     }
-    // 1. A bejövő DTO-ból csinál Entity-t (hogy el tudjuk menteni)
+    // 1. A bejövő DTO-ból csinál Entity-t 
     public AppUser toEntity(RegisterRequestDTO dto) {
         if (dto == null) {
             return null;
@@ -20,11 +20,10 @@ public class UserMapper {
         user.setUsername(dto.getUsername());
         user.setEmail(dto.getEmail());
         user.setPassword(dto.getPassword());
-        // A dátumokat nem kell beállítani, azt a BaseEntity intézi!
         return user;
     }
 
-    // 2. Az Entity-ből csinál biztonságos DTO-t (amit visszaküldünk)
+    // 2. Az Entity-ből csinál biztonságos DTO-t
     public UserResponseDTO toDto(AppUser user) {
         if (user == null) {
             return null;
@@ -33,10 +32,10 @@ public class UserMapper {
         dto.setId(user.getId());
         dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());
-        dto.setCreatedAt(user.getCreatedAt()); // Itt olvassuk ki a létrehozás idejét
+        dto.setCreatedAt(user.getCreatedAt()); 
 
 
-        // Itt használjuk a ProfileMappert!
+        
         // Ha van profilja, átalakítjuk DTO-vá. Ha nincs, null marad.
         if (user.getProfileDetail() != null) {
             dto.setProfileDetail(profileMapper.toDto(user.getProfileDetail()));
