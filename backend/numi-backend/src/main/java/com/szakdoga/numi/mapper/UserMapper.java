@@ -3,7 +3,7 @@ import com.szakdoga.numi.dto.RegisterRequestDTO;
 import com.szakdoga.numi.dto.UserResponseDTO;
 import com.szakdoga.numi.model.AppUser;
 import org.springframework.stereotype.Component;
-@Component // FONTOS: Ez jelzi a Springnek, hogy ez egy használható eszköz (Bean)
+@Component 
 public class UserMapper {
 
     private final ProfileMapper profileMapper;
