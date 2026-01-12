@@ -13,12 +13,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
-@MappedSuperclass // Ez fontos: ettől öröklődnek az oszlopok
+@MappedSuperclass 
 @Data
-@EntityListeners(AuditingEntityListener.class) // Ez figyeli az eseményeket
+@EntityListeners(AuditingEntityListener.class) 
 public abstract class BaseEntity {
     @CreatedDate
-    @Column(updatable = false) // Létrehozáskor mentődik, utána soha nem írható felül
+    @Column(updatable = false) 
     private LocalDateTime createdAt;
 
     @LastModifiedDate
