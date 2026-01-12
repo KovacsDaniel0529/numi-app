@@ -33,8 +33,7 @@ public class ProfileMapper {
         dto.setHeight(profile.getHeight());
         dto.setGender(profile.getGender());
         dto.setGoal(profile.getGoal());
-        dto.setUpdatedAt(profile.getUpdatedAt()); // <--- Mikor frissült?
-
+        dto.setUpdatedAt(profile.getUpdatedAt()); 
         return dto;
     }
 }
