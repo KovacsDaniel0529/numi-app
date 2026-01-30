@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import CalorieRing from '../components/CalorieRing';
-import MacroBar from '../components/MacroBar'; // Importáld be!
-import Meals from '../components/Meals';
+import MacroBar from '../components/MacroBar'; 
+import MealCard from '../components/MealCard';
 
 const Diary = () => {
   const [stats, setStats] = useState({
@@ -70,7 +70,16 @@ const Diary = () => {
           />
         </div>
       </div>
-      <Meals />
+      <div className="w-full pt-9"> 
+  <div className="w-full max-w-[1000px] flex justify-start pl-4">
+    <div className="w-full max-w-md">
+       <MealCard />
+    </div>
+  </div>
+  </div>
+   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-white/10">
+   
+   </div>
     </main>
   );
 };
