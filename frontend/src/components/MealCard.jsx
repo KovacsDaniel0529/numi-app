@@ -14,7 +14,7 @@ const MealCard = () => {
   ];
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-md mx-auto p-6 bg-[#12161b] rounded-[40px] shadow-2xl border border-white/5">
+    <div className="flex flex-col gap-4 w-full max-w-md mx-auto p-8 bg-[#12161b] rounded-[40px] shadow-2xl border border-white/5">
        <h2 className="text-2xl md:text-3xl mb-6 text-center font-lemon uppercase tracking-widest">
           Táplálkozás
         </h2>

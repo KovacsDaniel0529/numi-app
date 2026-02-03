@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom'
 
 // Itt importáljuk be a külön fájlokat!
 import Login from './pages/Login'
@@ -7,12 +7,15 @@ import Register from './pages/Register'
 import Navbar from './components/Navbar';
 import Diary from './pages/Diary'
 
-function App() {
-  return (
-    <BrowserRouter>
-     
+function AppContent(){
 
-        <div className="min-h-screen bg-[#222831] ">
+   const location = useLocation();
+  
+  // Itt soroljuk fel azokat az útvonalakat, ahol NEM szeretnénk Navbart látni
+  const noNavbarPaths = ['/register', '/login', '/onboarding'];
+  const showNavbar = !noNavbarPaths.includes(location.pathname);
+  return (
+  <div className="min-h-screen bg-[#222831] ">
           <div className="relative min-h-screen bg-[#1a1f26] overflow-x-hidden">
         
         {/* A HÁTTÉR LEVÉL */}
@@ -30,18 +33,30 @@ function App() {
         />
 
         
-        <Navbar /> 
+        {showNavbar && <Navbar />}
         
         <Routes>
           <Route path="/" element={<Diary />}/>
           <Route path="/diary" element={<Diary />} />
+         <Route path="/register" element={<Register />} />
           {/* ... egyéb utak */}
         </Routes>
       </div>
 
     </div>
-    </BrowserRouter>
   )
 }
 
+
+function App() {
+  return(
+ 
+    <BrowserRouter>
+     
+      <AppContent/>
+      
+    </BrowserRouter>
+  )
+
+}
 export default App

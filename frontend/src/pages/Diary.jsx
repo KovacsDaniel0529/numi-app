@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import CalorieRing from '../components/CalorieRing';
 import MacroBar from '../components/MacroBar'; 
 import MealCard from '../components/MealCard';
+import WaterTracker from '../components/WaterTracker';
 
 const Diary = () => {
   const [stats, setStats] = useState({
@@ -70,13 +71,25 @@ const Diary = () => {
           />
         </div>
       </div>
-      <div className="w-full pt-9"> 
-  <div className="w-full max-w-[1000px] flex justify-start pl-4">
-    <div className="w-full max-w-md">
-       <MealCard />
+     <div className="w-full max-w-[1200px] mx-auto pt-12 px-4">
+  <div className="flex flex-col lg:flex-row items-start justify-center gap-48">
+    
+    {/* BAL OLDAL: Étkezések (MealCard) */}
+    <div className="w-full lg:w-1/2 flex justify-center lg:justify-end">
+      <div className="w-full max-w-md ">
+        <MealCard />
+      </div>
     </div>
+
+    {/* JOBB OLDAL: Vízbevitel (WaterTracker) */}
+    <div className="w-full lg:w-1/2 flex justify-center lg:justify-start">
+      <div className="w-full max-w-md ">
+        <WaterTracker />
+      </div>
+    </div>
+
   </div>
-  </div>
+</div>
    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-white/10">
    
    </div>
