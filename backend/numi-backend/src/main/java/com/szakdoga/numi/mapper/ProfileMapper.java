@@ -19,6 +19,10 @@ public class ProfileMapper {
         profile.setGender(dto.getGender());
         profile.setGoal(dto.getGoal());
 
+        profile.setActivityLevel(dto.getActivityLevel());
+        profile.setDietaryPreference(dto.getDietaryPreference());
+        profile.setAllergies(dto.getAllergies());
+
         return profile;
     }
 
@@ -33,7 +37,10 @@ public class ProfileMapper {
         dto.setHeight(profile.getHeight());
         dto.setGender(profile.getGender());
         dto.setGoal(profile.getGoal());
-        dto.setUpdatedAt(profile.getUpdatedAt()); 
+        dto.setUpdatedAt(profile.getUpdatedAt());
+        dto.setActivityLevel(profile.getActivityLevel());
+        dto.setDietaryPreference(profile.getDietaryPreference());
+        dto.setAllergies(profile.getAllergies());
         return dto;
     }
 }
