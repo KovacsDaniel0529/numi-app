@@ -39,6 +39,8 @@ function AppContent(){
           <Route path="/" element={<Diary />}/>
           <Route path="/diary" element={<Diary />} />
          <Route path="/register" element={<Register />} />
+         <Route path="/login" element={<Login />} />
+        <Route path="/onboarding" element={<Onboarding />} />
           {/* ... egyéb utak */}
         </Routes>
       </div>

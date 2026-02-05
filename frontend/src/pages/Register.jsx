@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { User, Mail, Lock, ArrowRight } from 'lucide-react'
+import { User, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react'
 
 const Register = () => {
   const navigate = useNavigate()
@@ -10,6 +10,7 @@ const Register = () => {
     email: '',
     password: ''
   })
+  const [confirmPassword, setConfirmPassword] = useState('') // Új állapot a megerősítéshez
   const [error, setError] = useState(null)
 
   const handleChange = (e) => {
@@ -19,6 +20,12 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
+
+    // Jelszó egyezőség ellenőrzése kliens oldalon
+    if (formData.password !== confirmPassword) {
+      setError('A két jelszó nem egyezik meg!')
+      return
+    }
 
     try {
       const response = await fetch('http://localhost:8080/api/auth/register', {
@@ -52,9 +59,6 @@ const Register = () => {
           <h2 className="text-3xl font-lemon text-white uppercase tracking-widest text-center">
             Csatlakozz hozzánk
           </h2>
-          <p className="text-slate-400 font-lemon italic text-sm mt-2 text-center">
-            "Az egészséged az új vagyonod."
-          </p>
         </div>
         
         {error && (
@@ -68,7 +72,6 @@ const Register = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Felhasználónév */}
           <div className="relative group">
             <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-[#68D391] transition-colors" />
             <input 
@@ -81,7 +84,6 @@ const Register = () => {
             />
           </div>
 
-          {/* Email */}
           <div className="relative group">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-[#68D391] transition-colors" />
             <input 
@@ -94,7 +96,6 @@ const Register = () => {
             />
           </div>
 
-          {/* Jelszó */}
           <div className="relative group">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-[#68D391] transition-colors" />
             <input 
@@ -102,6 +103,19 @@ const Register = () => {
               name="password" 
               onChange={handleChange} 
               placeholder="Jelszó"
+              required 
+              className="w-full bg-[#1a1f26] border border-white/10 p-4 pl-12 rounded-2xl text-white outline-none focus:border-[#68D391] transition-all font-lemon"
+            />
+          </div>
+
+          {/* JELSZÓ MEGERŐSÍTÉSE MEZŐ */}
+          <div className="relative group">
+            <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-[#68D391] transition-colors" />
+            <input 
+              type="password" 
+              placeholder="Jelszó újra"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)} 
               required 
               className="w-full bg-[#1a1f26] border border-white/10 p-4 pl-12 rounded-2xl text-white outline-none focus:border-[#68D391] transition-all font-lemon"
             />
