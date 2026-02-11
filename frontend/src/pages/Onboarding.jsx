@@ -1,254 +1,171 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Onboarding = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
   
-  // Állapotok tárolása (itt gyűjtjük az adatokat)
-  const [step, setStep] = useState(1) // Melyik lépésnél tartunk?
   const [formData, setFormData] = useState({
     firstName: '',
     gender: 'female',
     age: '',
     height: '',
     weight: '',
-    goal: 'lose', // lose (fogyás), maintain (tartás), gain (hízás)
-    activityLevel: '1.2', // Ülőmunka az alap
-    allergies: {
-      gluten: false,
-      lactose: false,
-      peanut: false,
-      egg: false
-    }
-  })
+    goal: 'maintain',
+    activityLevel: 1.2,
+    dietaryPreference: 'omnivore',
+    allergies: [],
+    digestiveIssues: []
+  });
 
-  // Adatváltozás kezelése (amikor írsz egy mezőbe)
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    if (type === 'checkbox') {
-        setFormData(prev => ({
-            ...prev,
-            allergies: { ...prev.allergies, [name]: checked }
-        }))
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const toggleList = (listName, item) => {
+    setFormData(prev => ({
+      ...prev,
+      [listName]: prev[listName].includes(item)
+        ? prev[listName].filter(i => i !== item)
+        : [...prev[listName], item]
+    }));
+  };
+
+  // Napi kalóriaigény kiszámítása
+  const calculateDailyGoal = () => {
+    const { weight, height, age, gender, goal, activityLevel } = formData;
+    if (!weight || !height || !age) return 2000;
+
+    let bmr;
+    if (gender === 'male') {
+      bmr = 10 * weight + 6.25 * height - 5 * age + 5;
     } else {
-        setFormData({ ...formData, [name]: value })
-    }
-  }
-
-  // Kalória kiszámolása (Mifflin-St Jeor képlet) - Csak tájékoztató jellegű a végén
-  const calculateCalories = () => {
-    let bmr = 0;
-    const weight = parseFloat(formData.weight)
-    const height = parseFloat(formData.height)
-    const age = parseFloat(formData.age)
-
-    if (formData.gender === 'male') {
-        bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5
-    } else {
-        bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161
+      bmr = 10 * weight + 6.25 * height - 5 * age - 161;
     }
 
-    let tdee = bmr * parseFloat(formData.activityLevel)
+    let tdee = bmr * activityLevel;
 
-    if (formData.goal === 'lose') return Math.round(tdee - 500)
-    if (formData.goal === 'gain') return Math.round(tdee + 300)
-    return Math.round(tdee)
-  }
+    if (goal === 'lose') tdee -= 500;
+    if (goal === 'gain') tdee += 400;
 
-  // --- A LÉNYEG: MENTÉS AZ ADATBÁZISBA ---
+    return Math.round(tdee);
+  };
+
   const handleFinish = async () => {
-    const finalCalories = calculateCalories()
-    
-    // 1. Megnézzük, ki van bejelentkezve
-    const storedUser = localStorage.getItem('user')
-    
-    if (!storedUser) {
-      alert("Hiba: Nem vagy bejelentkezve!")
-      navigate('/login')
-      return
-    }
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (!storedUser) return navigate('/login');
 
-    const user = JSON.parse(storedUser)
-    const username = user.username 
-
-    // 2. Összeállítjuk az adatokat a Java Backendnek (ProfileDetail)
-    const profileData = {
-        firstName: formData.firstName,
-        age: parseInt(formData.age),      // Számmá alakítjuk
-        weight: parseFloat(formData.weight), // Tört számmá alakítjuk
-        height: parseFloat(formData.height),
-        gender: formData.gender,
-        goal: formData.goal
-    }
+    const calorieGoal = calculateDailyGoal();
+    
+    const finalData = {
+      ...formData,
+      dailyCalorieGoal: calorieGoal,
+      age: parseInt(formData.age),
+      weight: parseFloat(formData.weight),
+      height: parseFloat(formData.height)
+    };
 
     try {
-        // 3. Küldés a Backendnek
-        const response = await fetch(`http://localhost:8080/api/auth/profile/${username}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(profileData)
-        })
+      const response = await fetch(`http://localhost:8080/api/auth/profile/${storedUser.username}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(finalData)
+      });
 
-        if (!response.ok) {
-            throw new Error("Nem sikerült menteni a profilt.")
-        }
-
-        // 4. Ha sikerült, frissítjük a helyi tárolót is, hogy tudjuk: VAN profilja
-        user.profileDetail = profileData; 
-        localStorage.setItem('user', JSON.stringify(user));
-
-        alert(`Szuper, ${formData.firstName}! A profilod mentve. A napi célod kb: ${finalCalories} kcal.`)
-        navigate('/dashboard')
-
+      if (response.ok) {
+        const savedProfile = await response.json();
+        // Fontos: Frissítjük a localStorage-t, hogy a Diary már lássa az adatokat
+        storedUser.profileDetail = savedProfile;
+        localStorage.setItem('user', JSON.stringify(storedUser));
+        navigate('/diary');
+      }
     } catch (error) {
-        console.error("Hiba:", error)
-        alert("Hiba történt a mentéskor. Lehet, hogy nem fut a szerver?")
+      console.error("Hiba a mentéskor:", error);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
-      <div className="max-w-xl w-full bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+    <div className="min-h-[90vh] flex items-center justify-center px-4 py-12 relative overflow-hidden text-white font-lemon">
+      <div className="max-w-2xl w-full bg-[#101317]/80 backdrop-blur-xl p-8 md:p-12 rounded-[3rem] shadow-2xl border border-white/10 z-10">
         
         {/* Progress Bar */}
-        <div className="mb-8">
-            <div className="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">
-                <span className={step >= 1 ? "text-blue-600" : ""}>Név</span>
-                <span className={step >= 2 ? "text-blue-600" : ""}>Test</span>
-                <span className={step >= 3 ? "text-blue-600" : ""}>Cél</span>
-                <span className={step >= 4 ? "text-blue-600" : ""}>Egyéb</span>
-            </div>
-            <div className="h-2 bg-gray-100 rounded-full">
-                <div className="h-full bg-blue-600 rounded-full transition-all duration-500" style={{ width: `${(step / 4) * 100}%` }}></div>
-            </div>
+        <div className="mb-12">
+          <div className="flex justify-between text-[10px] uppercase tracking-[0.2em] text-slate-500 mb-4">
+            <span className={step >= 1 ? "text-[#68D391]" : ""}>Adatok</span>
+            <span className={step >= 2 ? "text-[#68D391]" : ""}>Célok</span>
+            <span className={step >= 3 ? "text-[#68D391]" : ""}>Aktivitás</span>
+            <span className={step >= 4 ? "text-[#68D391]" : ""}>Egészség</span>
+          </div>
+          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-[#68D391] to-emerald-400 transition-all duration-700" 
+              style={{ width: `${(step / 4) * 100}%` }}
+            />
+          </div>
         </div>
 
-        {/* --- 1. LÉPÉS: NÉV --- */}
         {step === 1 && (
-            <div className="animate-fade-in-up">
-                <h2 className="text-3xl font-bold text-gray-800 mb-2">Hogy szólíthatunk? 👋</h2>
-                <p className="text-gray-500 mb-6">Kezdjük az alapokkal.</p>
-                
-                <label className="block text-sm font-medium text-gray-700 mb-1">Keresztnév</label>
-                <input 
-                    type="text" name="firstName" value={formData.firstName} onChange={handleChange}
-                    className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-lg"
-                    placeholder="pl. Anna"
-                />
-                <button onClick={() => setStep(2)} disabled={!formData.firstName}
-                    className="w-full mt-8 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition disabled:opacity-50">
-                    Tovább
-                </button>
+          <div className="space-y-6">
+            <h2 className="text-2xl uppercase tracking-widest text-center mb-8">Ki vagy te?</h2>
+            <input type="text" name="firstName" placeholder="Keresztneved" value={formData.firstName} onChange={handleChange} className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none" />
+            <div className="flex gap-4">
+                <button onClick={() => setFormData({...formData, gender: 'male'})} className={`flex-1 py-3 rounded-xl border ${formData.gender === 'male' ? 'bg-blue-500/20 border-blue-500' : 'bg-white/5 border-white/10'}`}>Férfi</button>
+                <button onClick={() => setFormData({...formData, gender: 'female'})} className={`flex-1 py-3 rounded-xl border ${formData.gender === 'female' ? 'bg-pink-500/20 border-pink-500' : 'bg-white/5 border-white/10'}`}>Nő</button>
             </div>
+            <div className="grid grid-cols-3 gap-4">
+              <input type="number" name="age" placeholder="Kor" onChange={handleChange} className="bg-white/5 border border-white/10 p-4 rounded-2xl outline-none" />
+              <input type="number" name="height" placeholder="cm" onChange={handleChange} className="bg-white/5 border border-white/10 p-4 rounded-2xl outline-none" />
+              <input type="number" name="weight" placeholder="kg" onChange={handleChange} className="bg-white/5 border border-white/10 p-4 rounded-2xl outline-none" />
+            </div>
+            <button onClick={() => setStep(2)} className="w-full py-4 bg-[#68D391] text-[#1a1f26] rounded-2xl">Tovább</button>
+          </div>
         )}
 
-        {/* --- 2. LÉPÉS: TESTALKAT --- */}
         {step === 2 && (
-            <div className="animate-fade-in-up">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Milyenek a paramétereid? 📏</h2>
-                
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Nemed</label>
-                        <div className="flex gap-4">
-                            <button onClick={() => setFormData({...formData, gender: 'male'})} 
-                                className={`flex-1 py-3 rounded-xl border ${formData.gender === 'male' ? 'bg-blue-50 border-blue-500 text-blue-700 font-bold' : 'border-gray-200 text-gray-600'}`}>
-                                👨 Férfi
-                            </button>
-                            <button onClick={() => setFormData({...formData, gender: 'female'})}
-                                className={`flex-1 py-3 rounded-xl border ${formData.gender === 'female' ? 'bg-pink-50 border-pink-500 text-pink-700 font-bold' : 'border-gray-200 text-gray-600'}`}>
-                                👩 Nő
-                            </button>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm text-gray-600">Kor (év)</label>
-                            <input type="number" name="age" value={formData.age} onChange={handleChange} className="w-full p-3 border rounded-lg" placeholder="pl. 25" />
-                        </div>
-                        <div>
-                            <label className="block text-sm text-gray-600">Magasság (cm)</label>
-                            <input type="number" name="height" value={formData.height} onChange={handleChange} className="w-full p-3 border rounded-lg" placeholder="pl. 170" />
-                        </div>
-                        <div>
-                            <label className="block text-sm text-gray-600">Súly (kg)</label>
-                            <input type="number" name="weight" value={formData.weight} onChange={handleChange} className="w-full p-3 border rounded-lg" placeholder="pl. 70" />
-                        </div>
-                    </div>
-                </div>
-                <div className="flex gap-4 mt-8">
-                    <button onClick={() => setStep(1)} className="w-1/3 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">Vissza</button>
-                    <button onClick={() => setStep(3)} className="w-2/3 bg-blue-600 text-white py-3 rounded-xl font-bold">Tovább</button>
-                </div>
+          <div className="space-y-6">
+            <h2 className="text-2xl uppercase tracking-widest text-center">Mi a célod?</h2>
+            <div className="grid gap-3">
+              {['lose', 'maintain', 'gain'].map(g => (
+                <button key={g} onClick={() => setFormData({...formData, goal: g})} className={`p-5 rounded-2xl border ${formData.goal === g ? 'bg-[#68D391] text-[#1a1f26]' : 'bg-white/5 border-white/10'}`}>
+                  {g === 'lose' ? 'Fogyás' : g === 'maintain' ? 'Súlytartás' : 'Izomépítés'}
+                </button>
+              ))}
             </div>
+            <button onClick={() => setStep(3)} className="w-full py-4 bg-[#68D391] text-[#1a1f26] rounded-2xl">Tovább</button>
+          </div>
         )}
 
-        {/* --- 3. LÉPÉS: CÉLOK --- */}
         {step === 3 && (
-            <div className="animate-fade-in-up">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Mi a célod? 🎯</h2>
-                <div className="space-y-3">
-                    <button onClick={() => setFormData({...formData, goal: 'lose'})}
-                        className={`w-full text-left p-4 rounded-xl border flex items-center gap-3 transition ${formData.goal === 'lose' ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-gray-200 hover:border-blue-300'}`}>
-                        <span className="text-2xl">📉</span>
-                        <div><div className="font-bold text-gray-800">Fogyás</div></div>
-                    </button>
-                    <button onClick={() => setFormData({...formData, goal: 'maintain'})}
-                        className={`w-full text-left p-4 rounded-xl border flex items-center gap-3 transition ${formData.goal === 'maintain' ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-gray-200 hover:border-blue-300'}`}>
-                        <span className="text-2xl">⚖️</span>
-                        <div><div className="font-bold text-gray-800">Súlytartás</div></div>
-                    </button>
-                    <button onClick={() => setFormData({...formData, goal: 'gain'})}
-                        className={`w-full text-left p-4 rounded-xl border flex items-center gap-3 transition ${formData.goal === 'gain' ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-gray-200 hover:border-blue-300'}`}>
-                        <span className="text-2xl">💪</span>
-                        <div><div className="font-bold text-gray-800">Izomépítés</div></div>
-                    </button>
-                </div>
-                <div className="flex gap-4 mt-8">
-                    <button onClick={() => setStep(2)} className="w-1/3 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">Vissza</button>
-                    <button onClick={() => setStep(4)} className="w-2/3 bg-blue-600 text-white py-3 rounded-xl font-bold">Tovább</button>
-                </div>
+          <div className="space-y-6">
+            <h2 className="text-2xl uppercase tracking-widest text-center">Aktivitás</h2>
+            <div className="grid gap-3">
+              {[
+                {l: 'Ülőmunka', v: 1.2}, {l: 'Mérsékelt', v: 1.375}, {l: 'Aktív', v: 1.55}, {l: 'Nagyon aktív', v: 1.725}
+              ].map(a => (
+                <button key={a.v} onClick={() => setFormData({...formData, activityLevel: a.v})} className={`p-4 rounded-2xl border ${formData.activityLevel === a.v ? 'bg-[#68D391] text-[#1a1f26]' : 'bg-white/5 border-white/10'}`}>
+                  {a.l}
+                </button>
+              ))}
             </div>
+            <button onClick={() => setStep(4)} className="w-full py-4 bg-[#68D391] text-[#1a1f26] rounded-2xl">Tovább</button>
+          </div>
         )}
 
-        {/* --- 4. LÉPÉS: ALLERGIÁK --- */}
         {step === 4 && (
-            <div className="animate-fade-in-up">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Van valami tiltólistás? 🚫</h2>
-                <p className="text-gray-500 mb-6">Ezeket egyelőre csak eltároljuk.</p>
-                
-                <div className="grid grid-cols-1 gap-3 mb-8">
-                    {['gluten', 'lactose', 'peanut', 'egg'].map((allergy) => (
-                        <label key={allergy} className={`flex items-center p-4 border rounded-xl cursor-pointer transition ${formData.allergies[allergy] ? 'bg-red-50 border-red-500' : 'hover:bg-gray-50'}`}>
-                            <input 
-                                type="checkbox" 
-                                name={allergy}
-                                checked={formData.allergies[allergy]}
-                                onChange={handleChange}
-                                className="w-5 h-5 text-red-600 rounded focus:ring-red-500"
-                            />
-                            <span className="ml-3 font-medium text-gray-700 capitalize">
-                                {allergy === 'gluten' ? 'Gluténérzékenység' : 
-                                 allergy === 'lactose' ? 'Laktózintolerancia' : 
-                                 allergy === 'peanut' ? 'Mogyoróallergia' : 'Tojásallergia'}
-                            </span>
-                        </label>
-                    ))}
-                </div>
-
-                <div className="flex gap-4">
-                    <button onClick={() => setStep(3)} className="w-1/3 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">Vissza</button>
-                    {/* Ez a gomb hívja meg a handleFinish-t, ami elmenti az adatokat! */}
-                    <button onClick={handleFinish} className="w-2/3 bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-700 transition transform hover:scale-105">
-                        Kész vagyok! 🎉
-                    </button>
-                </div>
+          <div className="space-y-6">
+            <h2 className="text-xl uppercase tracking-widest text-center">Allergiák és panaszok</h2>
+            <div className="grid grid-cols-2 gap-2">
+              {['Glutén', 'Laktóz', 'Mogyoró', 'Tojás'].map(a => (
+                <button key={a} onClick={() => toggleList('allergies', a)} className={`p-3 rounded-xl border text-xs ${formData.allergies.includes(a) ? 'bg-red-500/20 border-red-500' : 'bg-white/5 border-white/10'}`}>{a}</button>
+              ))}
             </div>
+            <button onClick={handleFinish} className="w-full py-4 bg-[#68D391] text-[#1a1f26] rounded-2xl">Beállítások mentése</button>
+          </div>
         )}
-
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Onboarding
+export default Onboarding;

@@ -36,12 +36,11 @@ function AppContent(){
         {showNavbar && <Navbar />}
         
         <Routes>
-          <Route path="/" element={<Diary />}/>
+          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/diary" element={<Diary />} />
-         <Route path="/register" element={<Register />} />
-         <Route path="/login" element={<Login />} />
-        <Route path="/onboarding" element={<Onboarding />} />
-          {/* ... egyéb utak */}
         </Routes>
       </div>
 

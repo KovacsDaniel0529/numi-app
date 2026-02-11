@@ -1,26 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CalorieRing from '../components/CalorieRing';
 import MacroBar from '../components/MacroBar'; 
 import MealCard from '../components/MealCard';
 import WaterTracker from '../components/WaterTracker';
 
 const Diary = () => {
-  const [stats, setStats] = useState({
-    consumed: 1450,
-    goal: 2000,
-    protein: 80,
-    proteinGoal: 150,
-    carbs: 150,
-    carbsGoal: 250,
-    fat: 45,
-    fatGoal: 70
+  const [userData, setUserData] = useState(() => {
+    const savedUser = JSON.parse(localStorage.getItem('user'));
+    return {
+      name: savedUser?.profileDetail?.firstName || '',
+      dailyGoal: savedUser?.profileDetail?.dailyCalorieGoal || 2000
+    };
   });
+
+  const [stats, setStats] = useState({
+    consumed: 0,
+    goal: userData.dailyGoal,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    // Kiszámoljuk a makró célokat is az inicializált cél alapján
+    proteinGoal: Math.round((userData.dailyGoal * 0.25) / 4),
+    carbsGoal: Math.round((userData.dailyGoal * 0.45) / 4),
+    fatGoal: Math.round((userData.dailyGoal * 0.30) / 9)
+  });
+
+  // A useEffect-re már csak akkor van szükség, ha külső esemény (pl. étel hozzáadása) 
+  // miatt változnak az adatok, a név betöltéséhez NEM kell.
+  useEffect(() => {
+    // Itt maradhatnak az üres vagy egyéb frissítő logikák
+  }, []);
+
+  // useEffect a localStorage változásainak követésére
+ 
 
   return (
     <main className="container mx-auto px-4 py-8 text-white">
       <header className="flex flex-col items-center justify-center mb-12 text-center">
         <h1 className="text-4xl md:text-5xl font-bold text-white font-lemon mb-2">
-          Szia! Itt tartasz ma:
+          Szia! {userData.name} Itt tartasz ma:
         </h1>
         <p className="text-slate-500 font-lemon italic text-lg">
           "Az egészség a konyhában kezdődik."
@@ -49,7 +67,7 @@ const Diary = () => {
           </div>
         </div>
 
-        {/* MAKRO CSÍKOK - Itt használjuk az új komponenst */}
+        {/* MAKRO CSÍKOK */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-white/10">
           <MacroBar 
             label="Szénhidrát" 
@@ -71,28 +89,27 @@ const Diary = () => {
           />
         </div>
       </div>
-     <div className="w-full max-w-[1200px] mx-auto pt-12 px-4">
-  <div className="flex flex-col lg:flex-row items-start justify-center gap-48">
-    
-    {/* BAL OLDAL: Étkezések (MealCard) */}
-    <div className="w-full lg:w-1/2 flex justify-center lg:justify-end">
-      <div className="w-full max-w-md ">
-        <MealCard />
-      </div>
-    </div>
 
-    {/* JOBB OLDAL: Vízbevitel (WaterTracker) */}
-    <div className="w-full lg:w-1/2 flex justify-center lg:justify-start">
-      <div className="w-full max-w-md ">
-        <WaterTracker />
-      </div>
-    </div>
+      <div className="w-full max-w-[1200px] mx-auto pt-12 px-4">
+        <div className="flex flex-col lg:flex-row items-start justify-center gap-48">
+          
+          {/* BAL OLDAL: Étkezések (MealCard) */}
+          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end">
+            <div className="w-full max-w-md ">
+              <MealCard />
+            </div>
+          </div>
 
-  </div>
-</div>
-   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-white/10">
-   
-   </div>
+          {/* JOBB OLDAL: Vízbevitel (WaterTracker) */}
+          <div className="w-full lg:w-1/2 flex justify-center lg:justify-start">
+            <div className="w-full max-w-md ">
+              <WaterTracker />
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-white/10"></div>
     </main>
   );
 };
