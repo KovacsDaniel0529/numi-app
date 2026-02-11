@@ -20,9 +20,10 @@ public class ProfileMapper {
         profile.setGoal(dto.getGoal());
 
         profile.setActivityLevel(dto.getActivityLevel());
+        profile.setDailyCalorieGoal(dto.getDailyCalorieGoal());
         profile.setDietaryPreference(dto.getDietaryPreference());
         profile.setAllergies(dto.getAllergies());
-
+        profile.setDigestiveIssues(dto.getDigestiveIssues());
         return profile;
     }
 

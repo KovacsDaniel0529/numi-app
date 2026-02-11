@@ -44,20 +44,7 @@ public class AppUserService {
     
 
 
-    public void saveProfile(String username, ProfileDetail profilAdatok) {
-        // 1. Megkeressük, kihez tartozik ez a profil
-        AppUser user = appUserRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Nincs ilyen felhasználó!"));
 
-        // 2. Beállítjuk a kapcsolatot (összekötjük őket)
-        profilAdatok.setUser(user);
-
-        // 3. Elmentjük a profilt
-        profileDetailRepository.save(profilAdatok);
-
-        user.setProfileDetail(profilAdatok);
-        appUserRepository.save(user);
-    }
 
     private Integer calculateDailyCalories(ProfileDetail profile) {
         double bmr;
