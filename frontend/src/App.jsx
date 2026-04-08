@@ -6,6 +6,7 @@ import Onboarding from './pages/Onboarding'
 import Register from './pages/Register'
 import Navbar from './components/Navbar';
 import Diary from './pages/Diary'
+import Profile from './pages/Profile'
 
 function AppContent(){
 
@@ -41,12 +42,15 @@ function AppContent(){
           <Route path="/register" element={<Register />} />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/diary" element={<Diary />} />
+          <Route path="/profile" element={<Profile />}/>
         </Routes>
       </div>
 
     </div>
   )
 }
+
+
 
 
 function App() {

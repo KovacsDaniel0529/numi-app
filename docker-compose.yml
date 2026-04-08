@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:15
+    container_name: numi_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "123456"
+      POSTGRES_DB: numi_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend/numi-backend
+    container_name: numi_backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      # Itt felülbíráljuk a localhost-ot a 'db' névre a konténerhálózaton
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/numi_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123456
+
+  frontend:
+    build: ./frontend
+    container_name: numi_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:

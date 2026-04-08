@@ -83,4 +83,8 @@ public class AppUserService {
         appUserRepository.save(user);
     }
 
+    public AppUser findByUsername(String username) {
+        return appUserRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Felhasználó nem található: " + username));
+    }
 }
