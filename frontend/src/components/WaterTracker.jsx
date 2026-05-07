@@ -19,7 +19,7 @@ const WaterTracker = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-between gap-6 pt-8 p-6 pb-12 bg-[#12161b] rounded-[40px] shadow-2xl border border-white/5 w-full h-full">
+    <div className="flex flex-col items-center justify-between gap-6 pt-8 p-6 pb-12 bg-[#171e27] rounded-[40px] shadow-2xl border border-white/5 w-full h-full">
     {/* A justify-between segít elosztani a tartalmat, ha a kártya megnyúlik */}
     <h2 className="text-2xl md:text-3xl mb-6 font-lemon uppercase tracking-widest text-white text-center">Vízbevitel</h2>
       
@@ -73,13 +73,13 @@ const WaterTracker = () => {
         
         <button 
           onClick={() => setConsumed(prev => +(prev + 0.25).toFixed(2))}
-          className="flex-1 py-4 bg-[#1a1f26] border border-white/10 rounded-2xl text-white font-lemon hover:border-emerald-400 transition-all active:scale-95"
+          className="flex-1 py-4 bg-[#12181f] border border-white/10 rounded-2xl text-white font-lemon hover:border-emerald-400 transition-all active:scale-95"
         >
           + 2.5 dl
         </button>
         <button 
           onClick={() => setConsumed(prev => Math.max(0, +(prev - 0.25).toFixed(2)))}
-          className="flex-1 py-4 bg-[#1a1f26] border border-white/10 rounded-2xl text-white font-lemon hover:border-red-400 transition-all active:scale-95"
+          className="flex-1 py-4 bg-[#12181f] border border-white/10 rounded-2xl text-white font-lemon hover:border-red-400 transition-all active:scale-95"
         >
           - 2.5 dl
         </button>

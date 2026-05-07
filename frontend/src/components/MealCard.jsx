@@ -14,7 +14,7 @@ const MealCard = () => {
   ];
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-md mx-auto p-8 bg-[#12161b] rounded-[40px] shadow-2xl border border-white/5">
+    <div className="flex flex-col gap-4 w-full max-w-md mx-auto p-8 bg-[#171e27] rounded-[40px] shadow-2xl border border-white/5">
        <h2 className="text-2xl md:text-3xl mb-6 text-center font-lemon uppercase tracking-widest">
           Táplálkozás
         </h2>
@@ -24,7 +24,7 @@ const MealCard = () => {
         return (
           <div 
             key={meal.id} 
-            className="flex items-center justify-between bg-[#1a1f26] p-5 rounded-[30px] border border-white/[0.03] transition-all hover:bg-[#222832]"
+            className="flex items-center justify-between bg-[#12181f] p-5 rounded-[30px] border border-white/[0.03] transition-all hover:bg-[#222832]"
           >
             {/* ÉTEL IKON */}
             <div className="w-16 h-16 flex-shrink-0">

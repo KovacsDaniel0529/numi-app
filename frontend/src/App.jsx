@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom'
-
+import { UserProvider } from './context/UserContext';
 // Itt importáljuk be a külön fájlokat!
 import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
@@ -16,8 +16,8 @@ function AppContent(){
   const noNavbarPaths = ['/register', '/login', '/onboarding'];
   const showNavbar = !noNavbarPaths.includes(location.pathname);
   return (
-  <div className="min-h-screen bg-[#222831] ">
-          <div className="relative min-h-screen bg-[#1a1f26] overflow-x-hidden">
+  <div className="min-h-screen bg-[#12181f] ">
+          <div className="relative min-h-screen bg-[#12181f] overflow-x-hidden">
         
         {/* A HÁTTÉR LEVÉL */}
         <img 
@@ -55,12 +55,14 @@ function AppContent(){
 
 function App() {
   return(
- 
+    
+  <UserProvider>
     <BrowserRouter>
      
       <AppContent/>
       
     </BrowserRouter>
+  </UserProvider>
   )
 
 }

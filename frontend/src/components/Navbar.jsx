@@ -13,7 +13,7 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="bg-[#1e1e1e]/80 backdrop-blur-xl sticky top-0 z-50 
+    <nav className="bg-[#0a0d11]/80 backdrop-blur-xl sticky top-0 z-50 
                     border-b border-white/[0.05] shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
       {/* A fenti osztályok titka:
         - border-white/[0.05]: Hajszálvékony, 5%-os átlátszóságú fehér vonal.

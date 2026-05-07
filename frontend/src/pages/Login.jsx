@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react' // useContext hozzáadva
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { User, Lock, ArrowRight } from 'lucide-react'
+import { UserContext } from '../context/UserContext' // Importáld a saját Contextedet!
 
 const Login = () => {
   const navigate = useNavigate()
+  // Itt kérjük le a setUser függvényt a közös tárolóból
+  const { setUser } = useContext(UserContext)
 
   const [formData, setFormData] = useState({
     username: '',
@@ -31,13 +34,20 @@ const Login = () => {
         throw new Error('Hibás felhasználónév vagy jelszó!')
       }
 
-      const user = await response.json()
-      localStorage.setItem('user', JSON.stringify(user))
+      const userData = await response.json()
+      
+      // 1. Mentés a böngésző tartós tárolójába (hogy refresh után is meglegyen)
+      localStorage.setItem('user', JSON.stringify(userData))
 
-      if (user.profileDetail === null) {
+      // 2. KRITIKUS LÉPÉS: Frissítjük a Context állapotát is!
+      // Ez szól az összes többi komponensnek (pl. Profile), hogy megérkezett az adat.
+      setUser(userData)
+
+      // 3. Navigáció az adatok alapján
+      if (userData.profileDetail === null) {
         navigate('/onboarding')
       } else {
-        navigate('/diary') // A korábbi dashboard helyett a Diary-re navigálunk
+        navigate('/diary') 
       }
 
     } catch (err) {

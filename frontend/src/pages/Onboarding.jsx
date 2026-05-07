@@ -54,6 +54,7 @@ const Onboarding = () => {
 
   const handleFinish = async () => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
+    if(storedUser) return navigate('/diary');
     if (!storedUser) return navigate('/login');
 
     const calorieGoal = calculateDailyGoal();
