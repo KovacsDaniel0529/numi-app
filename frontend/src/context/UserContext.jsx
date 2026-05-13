@@ -16,7 +16,7 @@ export const UserProvider = ({ children }) => {
 
     try {
       // Itt a te meglévő /stats/végpontodat használjuk a frissítéshez!
-      const response = await fetch(`http://localhost:8080/api/auth/stats/${savedUser.username}`);
+      const response = await fetch(`http://localhost:8080/api/stats/${savedUser.username}`);
       if (response.ok) {
         const freshData = await response.json();
         setUser(freshData);

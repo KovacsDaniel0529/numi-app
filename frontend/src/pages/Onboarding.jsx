@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { UserContext } from '../context/UserContext';
+import AllergySelector from '../components/AllergySelector';
 
 const Onboarding = () => {
   const navigate = useNavigate();
+  const {refreshUser,setUser} = useContext(UserContext);
   const [step, setStep] = useState(1);
+  
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -53,37 +57,50 @@ const Onboarding = () => {
   };
 
   const handleFinish = async () => {
-    const storedUser = JSON.parse(localStorage.getItem('user'));
-    if(storedUser) return navigate('/diary');
-    if (!storedUser) return navigate('/login');
+   const storedUser = JSON.parse(localStorage.getItem('user'));
+  
+  // 1. Csak akkor ugrunk ki, ha NINCS felhasználó
+  if (!storedUser) {
+    navigate('/login');
+    return;
+  }
 
-    const calorieGoal = calculateDailyGoal();
-    
-    const finalData = {
-      ...formData,
-      dailyCalorieGoal: calorieGoal,
-      age: parseInt(formData.age),
-      weight: parseFloat(formData.weight),
-      height: parseFloat(formData.height)
-    };
+  // 2. Itt már biztosan van user, jöhet az adatok előkészítése
+  const calorieGoal = calculateDailyGoal();
+  
+  const finalData = {
+    ...formData,
+    dailyCalorieGoal: calorieGoal,
+    age: parseInt(formData.age),
+    weight: parseFloat(formData.weight),
+    height: parseFloat(formData.height)
+  };
 
-    try {
-      const response = await fetch(`http://localhost:8080/api/auth/profile/${storedUser.username}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(finalData)
-      });
+  console.log("Küldés indítása...", finalData); // Debug log
 
-      if (response.ok) {
-        const savedProfile = await response.json();
-        // Fontos: Frissítjük a localStorage-t, hogy a Diary már lássa az adatokat
-        storedUser.profileDetail = savedProfile;
-        localStorage.setItem('user', JSON.stringify(storedUser));
-        navigate('/diary');
-      }
-    } catch (error) {
-      console.error("Hiba a mentéskor:", error);
+  try {
+    const response = await fetch(`http://localhost:8080/api/profile/${storedUser.username}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(finalData)
+    });
+
+    if (response.ok) {
+      const savedProfile = await response.json();
+      
+      // 1. Frissítjük a localStorage-t
+      const updatedUser = { ...storedUser, profileDetail: savedProfile };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // 2. FRISSÍTJÜK A CONTEXT-ET (Ez fogja "értesíteni" az appot, hogy van profil)
+      setUser(updatedUser);
+      
+      // 3. Most már mehet a navigáció
+      navigate('/diary');
     }
+  } catch (error) {
+    console.error("Hiba:", error);
+  }
   };
 
   return (
@@ -152,17 +169,23 @@ const Onboarding = () => {
             <button onClick={() => setStep(4)} className="w-full py-4 bg-[#68D391] text-[#1a1f26] rounded-2xl">Tovább</button>
           </div>
         )}
-
         {step === 4 && (
-          <div className="space-y-6">
-            <h2 className="text-xl uppercase tracking-widest text-center">Allergiák és panaszok</h2>
-            <div className="grid grid-cols-2 gap-2">
-              {['Glutén', 'Laktóz', 'Mogyoró', 'Tojás'].map(a => (
-                <button key={a} onClick={() => toggleList('allergies', a)} className={`p-3 rounded-xl border text-xs ${formData.allergies.includes(a) ? 'bg-red-500/20 border-red-500' : 'bg-white/5 border-white/10'}`}>{a}</button>
-              ))}
-            </div>
-            <button onClick={handleFinish} className="w-full py-4 bg-[#68D391] text-[#1a1f26] rounded-2xl">Beállítások mentése</button>
-          </div>
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <h2 className="text-2xl uppercase tracking-widest text-center mb-4">
+            Allergiák és panaszok
+          </h2>
+          <AllergySelector 
+              selectedAllergies={formData.allergies}
+              onToggle={(item) => toggleList('allergies', item)}
+              onClear={() => setFormData(prev => ({ ...prev, allergies: [] }))}
+          />
+          <button 
+          onClick={handleFinish} 
+          className="w-full py-4 bg-[#68D391] text-[#1a1f26] rounded-2xl font-bold uppercase tracking-widest mt-6"
+          >
+          Beállítások mentése
+          </button>
+        </div>
         )}
       </div>
     </div>
