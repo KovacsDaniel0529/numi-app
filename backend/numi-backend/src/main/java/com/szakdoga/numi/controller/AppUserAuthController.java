@@ -1,6 +1,7 @@
 package com.szakdoga.numi.controller;
 
 import com.szakdoga.numi.dto.ProfileRequestDTO;
+import com.szakdoga.numi.dto.ProfileResponseDTO;
 import com.szakdoga.numi.dto.RegisterRequestDTO;
 import com.szakdoga.numi.dto.UserResponseDTO;
 import com.szakdoga.numi.mapper.ProfileMapper;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import com.szakdoga.numi.model.ProfileDetail;
 
 @RestController
-@RequestMapping("/api/auth") 
+@RequestMapping("/api")
 @CrossOrigin(origins = "http://localhost:5173") 
 public class AppUserAuthController {
     private final AppUserService appUserService;
@@ -52,12 +53,12 @@ public class AppUserAuthController {
         return userMapper.toDto(user);
     }
     @PostMapping("/profile/{username}")
-    public void saveProfile(@PathVariable String username, @RequestBody ProfileRequestDTO request) {
+    public ProfileResponseDTO saveProfile(@PathVariable String username, @RequestBody ProfileRequestDTO request) {
 
         ProfileDetail profileEntity = profileMapper.toEntity(request);
 
-    
-        appUserService.saveProfile(username, profileEntity);
+        ProfileDetail saved = appUserService.saveProfile(username, profileEntity);
+        return profileMapper.toDto(saved);
     }
     @GetMapping("/stats/{username}")
     public UserResponseDTO getUserStats(@PathVariable String username) {

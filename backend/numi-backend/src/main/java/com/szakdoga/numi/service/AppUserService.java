@@ -67,20 +67,25 @@ public class AppUserService {
         return (int) Math.round(tdee); // Súlytartás
     }
 
-    public void saveProfile(String username, ProfileDetail profilAdatok) {
+    public ProfileDetail saveProfile(String username, ProfileDetail profilAdatok) {
         AppUser user = appUserRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Nincs ilyen felhasználó!"));
 
-        // 1. Kiszámoljuk az egyéni kalóriacélt
+        // Kalória számítás (a meglévő logikád alapján)
         Integer calorieGoal = calculateDailyCalories(profilAdatok);
-        profilAdatok.setDailyCalorieGoal(calorieGoal); // Ehhez add hozzá a mezőt a ProfileDetail-be!
+        profilAdatok.setDailyCalorieGoal(calorieGoal);
 
-        // 2. Kapcsolat beállítása és mentés
         profilAdatok.setUser(user);
-        profileDetailRepository.save(profilAdatok);
 
-        user.setProfileDetail(profilAdatok);
+        // Elmentjük a profilt
+        ProfileDetail savedProfile = profileDetailRepository.save(profilAdatok);
+
+        // Összekötjük a userrel és őt is mentjük
+        user.setProfileDetail(savedProfile);
         appUserRepository.save(user);
+
+        // VISSZATÉRÜNK a mentett profillal!
+        return savedProfile;
     }
 
     public AppUser findByUsername(String username) {
