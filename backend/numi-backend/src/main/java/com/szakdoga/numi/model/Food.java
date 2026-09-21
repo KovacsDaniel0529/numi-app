@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Entity 
 @Table(name = "foods") 
 @Data 
@@ -14,17 +16,33 @@ public class Food {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Egyedi azonosító (1, 2, 3...)
+    private Long id;
 
-    private String name; // Étel neve (pl. "Csirkemell")
+    @Column(nullable = false)
+    private String name;
 
-    private int calories; // Kalória (pl. 110 kcal)
+    private String category;
 
-    private double protein; // Fehérje
+    @Column(name = "calories_100g", nullable = false)
+    private BigDecimal calories100g;
 
-    private double carbs; // Szénhidrát
+    @Column(name = "protein_100g", nullable = false)
+    private BigDecimal protein100g;
 
-    private double fat; // Zsír
+    @Column(name = "carbs_100g", nullable = false)
+    private BigDecimal carbs100g;
+
+    @Column(name = "fat_100g", nullable = false)
+    private BigDecimal fat100g;
+
+    @Column(name = "fiber_100g")
+    private BigDecimal fiber100g;
+
+    @Column(name = "is_custom")
+    private Boolean isCustom = false;
+
+    
+    // Getterek, Setterek...
 
     
     // private boolean isGlutenFree;
