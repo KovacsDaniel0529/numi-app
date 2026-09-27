@@ -33,6 +33,9 @@ import java.util.List;
 
         private String goal; // lose, maintain, gain
 
+        @Column(name = "daily_water_goal_ml")
+        private Integer dailyWaterGoalMl;
+
         private Double activityLevel;
 
         private String dietaryPreference;

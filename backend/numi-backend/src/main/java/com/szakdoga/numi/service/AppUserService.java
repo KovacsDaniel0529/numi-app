@@ -75,6 +75,9 @@ public class AppUserService {
         Integer calorieGoal = calculateDailyCalories(profilAdatok);
         profilAdatok.setDailyCalorieGoal(calorieGoal);
 
+        Integer waterGoal = calculateDailyWaterGoal(profilAdatok);
+        profilAdatok.setDailyWaterGoalMl(waterGoal);
+
         profilAdatok.setUser(user);
 
         // Elmentjük a profilt
@@ -91,5 +94,10 @@ public class AppUserService {
     public AppUser findByUsername(String username) {
         return appUserRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Felhasználó nem található: " + username));
+    }
+
+    private Integer calculateDailyWaterGoal(ProfileDetail profile) {
+        // Ökölszabály: kb. 33 ml víz / testsúly kg
+        return (int) Math.round(profile.getWeight() * 33);
     }
 }

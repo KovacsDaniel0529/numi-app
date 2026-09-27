@@ -1,0 +1,53 @@
+### 1. Regisztráció
+POST http://localhost:8080/api/register
+Content-Type: application/json
+
+{
+  "username": "Mmacmacm",
+  "email": "test5555@example.com",
+  "password": "teszt1234"
+}
+
+### 2. Profil kitöltése (hogy legyen kalória/víz cél)
+POST http://localhost:8080/api/profile/testuser
+Content-Type: application/json
+
+{
+  "firstName": "mcmcmcm",
+  "age": 25,
+  "weight": 75,
+  "height": 180,
+  "gender": "male",
+  "goal": "lose",
+  "activityLevel": 1.55,
+  "dietaryPreference": "none"
+}
+
+### 3. Nézzük meg az összes alapanyagot (kell egy foodId a következő lépéshez)
+GET http://localhost:8080/api/foods
+
+### 4. FoodLog hozzáadása (cseréld a foodId-t egy valósra a fenti listából!)
+POST http://localhost:8080/api/food-logs/testuser
+Content-Type: application/json
+
+{
+  "foodId": 1,
+  "quantityGrams": 150,
+  "mealType": "LUNCH",
+  "logDate": "2026-09-27"
+}
+
+### 5. Napi FoodLog lekérdezése
+GET http://localhost:8080/api/food-logs/testuser?date=2026-09-27
+
+### 6. WaterLog hozzáadása
+POST http://localhost:8080/api/water-logs/testuser
+Content-Type: application/json
+
+{
+  "amountMl": 250,
+  "logDate": "2026-09-27"
+}
+
+### 7. Napi WaterLog összesítés
+GET http://localhost:8080/api/water-logs/testuser?date=2026-09-27

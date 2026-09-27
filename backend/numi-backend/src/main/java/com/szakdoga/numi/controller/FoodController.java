@@ -1,32 +1,30 @@
 package com.szakdoga.numi.controller;
 
+import com.szakdoga.numi.dto.FoodResponseDTO;
 import com.szakdoga.numi.model.Food;
 import com.szakdoga.numi.repository.FoodRepository;
+import com.szakdoga.numi.service.FoodService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController 
-@RequestMapping("/api/foods") 
+@RequestMapping("/api/foods")
+@RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class FoodController {
 
-    private final FoodRepository foodRepository;
+    private final FoodService foodService;
 
-    
-    public FoodController(FoodRepository foodRepository) {
-        this.foodRepository = foodRepository;
-    }
-
-   
+    // GET kérés: http://localhost:8080/api/foods
+    // VAGY kereséssel: http://localhost:8080/api/foods?search=csirke
     @GetMapping
-    public List<Food> getAllFoods() {
-        return foodRepository.findAll();
-    }
-
-  
-    @PostMapping
-    public Food createFood(@RequestBody Food food) {
-        return foodRepository.save(food);
+    public ResponseEntity<List<FoodResponseDTO>> getAllFoods(
+            @RequestParam(required = false) String search
+    ) {
+        List<FoodResponseDTO> response = foodService.getFoods(search);
+        return ResponseEntity.ok(response);
     }
 }

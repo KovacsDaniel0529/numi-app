@@ -1,13 +1,14 @@
 package com.szakdoga.numi.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
-@Table(name = "app_users") 
-@Data 
+@Table(name = "app_users")
+@Getter
+@Setter
+@ToString(exclude = "profileDetail")
+@EqualsAndHashCode(exclude = "profileDetail")
 @NoArgsConstructor 
 @AllArgsConstructor 
 public class  AppUser extends BaseEntity {
