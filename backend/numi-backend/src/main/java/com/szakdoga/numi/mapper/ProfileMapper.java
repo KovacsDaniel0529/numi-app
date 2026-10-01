@@ -42,6 +42,7 @@ public class ProfileMapper {
         dto.setActivityLevel(profile.getActivityLevel());
         dto.setDailyCalorieGoal(profile.getDailyCalorieGoal());
         dto.setDietaryPreference(profile.getDietaryPreference());
+        dto.setDailyWaterGoalMl(profile.getDailyWaterGoalMl());
         dto.setAllergies(profile.getAllergies());
         return dto;
     }

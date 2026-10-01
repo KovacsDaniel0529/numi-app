@@ -1,5 +1,6 @@
 package com.szakdoga.numi.dto;
 
+import com.szakdoga.numi.model.AllergenType;
 import lombok.Data;
 
 import java.util.List;
@@ -15,6 +16,6 @@ public class ProfileRequestDTO {
     private Double activityLevel;
     private String dietaryPreference;
     private Integer dailyCalorieGoal;
-    private List<String> allergies;
+    private List<AllergenType> allergies;
     private List<String> digestiveIssues;
 }

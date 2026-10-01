@@ -32,10 +32,10 @@ public class ProfileDetailController {
         ProfileDetail profile = profileMapper.toEntity(dto);
 
         // Ez most már nem lesz null, mert beletettük a konstruktorba
-        appUserService.saveProfile(username, profile);
+        ProfileDetail savedProfile = appUserService.saveProfile(username, profile);
 
         // Ez küldi vissza a JSON-t a React-nak, hogy át tudjon ugrani a Diary-re
-        return ResponseEntity.ok(profileMapper.toDto(profile));
+        return ResponseEntity.ok(profileMapper.toDto(savedProfile));
     }
 
 }

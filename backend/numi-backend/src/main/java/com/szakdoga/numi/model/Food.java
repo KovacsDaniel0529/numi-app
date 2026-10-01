@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity // 1. Ezzel jelezzük a Springnek és a Hibernate-nek, hogy ez az osztály egy adatbázis táblát reprezentál.
 @Table(name = "foods") // 2. Megmondjuk, hogy a PostgreSQL-ben a tábla neve pontosan "foods".
@@ -49,4 +50,9 @@ public class Food extends BaseEntity {
     @Column(name = "is_custom")
     @Builder.Default
     private Boolean isCustom = false;
+    @ElementCollection(targetClass = AllergenType.class)
+    @CollectionTable(name = "food_allergens", joinColumns = @JoinColumn(name = "food_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "allergen")
+    private List<AllergenType> allergens;
 }

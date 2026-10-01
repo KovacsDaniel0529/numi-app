@@ -52,14 +52,7 @@ public class AppUserAuthController {
       
         return userMapper.toDto(user);
     }
-    @PostMapping("/profile/{username}")
-    public ProfileResponseDTO saveProfile(@PathVariable String username, @RequestBody ProfileRequestDTO request) {
 
-        ProfileDetail profileEntity = profileMapper.toEntity(request);
-
-        ProfileDetail saved = appUserService.saveProfile(username, profileEntity);
-        return profileMapper.toDto(saved);
-    }
     @GetMapping("/stats/{username}")
     public UserResponseDTO getUserStats(@PathVariable String username) {
         // Megkeressük a felhasználót a service segítségével

@@ -45,10 +45,11 @@ import java.util.List;
         // 3. Allergiák listája
         // Az @ElementCollection létrehoz egy kapcsolódó táblát az adatbázisban,
         // így nem kell manuálisan JSON-né alakítani.
-        @ElementCollection
+        @ElementCollection(targetClass = AllergenType.class)
         @CollectionTable(name = "profile_allergies", joinColumns = @JoinColumn(name = "profile_id"))
+        @Enumerated(EnumType.STRING)
         @Column(name = "allergy")
-        private List<String> allergies;
+        private List<AllergenType> allergies;
 
         // 4. Emésztési panaszok (AI receptekhez nagyon hasznos)
         // pl. "puffadás", "reflux"

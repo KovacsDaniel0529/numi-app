@@ -1,4 +1,5 @@
 package com.szakdoga.numi.dto;
+import com.szakdoga.numi.model.AllergenType;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -24,5 +25,7 @@ public class FoodResponseDTO {
 
     private String servingUnit; // pl. "g" vagy "adag"
     private Boolean isRecipe;
-    private List<String> allergens; // hogy ne akadjon el a React szűrője
+    private List<AllergenType> allergens; // hogy ne akadjon el a React szűrője
+    private Boolean allergyWarning;
+    private List<AllergenType> matchedAllergens;
 }
