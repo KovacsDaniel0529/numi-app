@@ -1,6 +1,8 @@
 package com.szakdoga.numi.service;
 import com.szakdoga.numi.dto.WaterLogRequestDTO;
 import com.szakdoga.numi.dto.WaterLogSummaryDTO;
+import com.szakdoga.numi.exception.BadRequestException;
+import com.szakdoga.numi.exception.ResourceNotFoundException;
 import com.szakdoga.numi.model.AppUser;
 import com.szakdoga.numi.model.WaterLog;
 import com.szakdoga.numi.repository.AppUserRepository;
@@ -17,8 +19,11 @@ public class WaterLogService {
     private final AppUserRepository appUserRepository;
 
     public WaterLogSummaryDTO addWaterLog(String username, WaterLogRequestDTO request) {
+        if (request.getAmountMl() == null || request.getAmountMl() <= 0) {
+            throw new BadRequestException("A vízmennyiségnek nagyobbnak kell lennie nullánál!");
+        }
         AppUser user = appUserRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Nincs ilyen felhasználó!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Felhasználó nem található: " + username));
 
         LocalDate targetDate = request.getLogDate() != null ? request.getLogDate() : LocalDate.now();
 
@@ -35,7 +40,7 @@ public class WaterLogService {
 
     public WaterLogSummaryDTO getDailySummary(String username, LocalDate date) {
         AppUser user = appUserRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Nincs ilyen felhasználó!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Felhasználó nem található: " + username));
 
         LocalDate targetDate = date != null ? date : LocalDate.now();
         return buildSummary(user, targetDate);

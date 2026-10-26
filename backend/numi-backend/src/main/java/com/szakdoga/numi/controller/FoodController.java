@@ -22,9 +22,10 @@ public class FoodController {
     // VAGY kereséssel: http://localhost:8080/api/foods?search=csirke
     @GetMapping
     public ResponseEntity<List<FoodResponseDTO>> getAllFoods(
-            @RequestParam(required = false) String search
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String username
     ) {
-        List<FoodResponseDTO> response = foodService.getFoods(search);
+        List<FoodResponseDTO> response = foodService.getFoods(search, username);
         return ResponseEntity.ok(response);
     }
 }

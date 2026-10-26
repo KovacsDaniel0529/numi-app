@@ -10,7 +10,6 @@ public class UserResponseDTO {
     private Long id;
     private String username;
     private String email;
-    private ProfileRequestDTO profileRequestDTO;
 
     // Ez jön a BaseEntity-ből:
     private LocalDateTime createdAt;

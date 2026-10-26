@@ -3,51 +3,102 @@ POST http://localhost:8080/api/register
 Content-Type: application/json
 
 {
-  "username": "Mmacmacm",
-  "email": "test5555@example.com",
+  "username": "teszt01",
+  "email": "teszt01@example.com",
   "password": "teszt1234"
 }
 
-### 2. Profil kitöltése (hogy legyen kalória/víz cél)
-POST http://localhost:8080/api/profile/testuser
+### 2. Profil mentése (laktóz-allergiával)
+POST http://localhost:8080/api/profile/profile/test01
 Content-Type: application/json
 
 {
-  "firstName": "mcmcmcm",
+  "firstName": "Teszt",
   "age": 25,
   "weight": 75,
   "height": 180,
   "gender": "male",
   "goal": "lose",
   "activityLevel": 1.55,
-  "dietaryPreference": "none"
+  "dietaryPreference": "none",
+  "allergies": ["LACTOSE"],
+  "digestiveIssues": []
 }
 
-### 3. Nézzük meg az összes alapanyagot (kell egy foodId a következő lépéshez)
-GET http://localhost:8080/api/foods
+### 3. Profil ÚJRA mentése, más súllyal (a módosítást teszteli)
+POST http://localhost:8080/api/profile/teszt01
+Content-Type: application/json
 
-### 4. FoodLog hozzáadása (cseréld a foodId-t egy valósra a fenti listából!)
-POST http://localhost:8080/api/food-logs/testuser
+{
+  "firstName": "Teszt",
+  "age": 25,
+  "weight": 80,
+  "height": 180,
+  "gender": "male",
+  "goal": "lose",
+  "activityLevel": 1.55,
+  "dietaryPreference": "none",
+  "allergies": ["LACTOSE"],
+  "digestiveIssues": []
+}
+
+### 4. Keresés allergén-figyelmeztetéssel (tej)
+GET http://localhost:8080/api/foods?search=tej&username=teszt01
+
+### 5. Keresés, aminél NEM kell figyelmeztetés (csirke)
+GET http://localhost:8080/api/foods?search=csirke&username=teszt01
+
+### 6. FoodLog hozzáadása (a foodId-t a 5. lépés válaszából másold ki a csirkemellfilé id-jával!)
+POST http://localhost:8080/api/food-logs/teszt01
 Content-Type: application/json
 
 {
   "foodId": 1,
   "quantityGrams": 150,
-  "mealType": "LUNCH",
-  "logDate": "2026-09-27"
+  "mealType": "LUNCH"
 }
 
-### 5. Napi FoodLog lekérdezése
-GET http://localhost:8080/api/food-logs/testuser?date=2026-09-27
+### 7. Mai napló lekérdezése
+GET http://localhost:8080/api/food-logs/teszt01
 
-### 6. WaterLog hozzáadása
-POST http://localhost:8080/api/water-logs/testuser
+### 8. Víz hozzáadása (kétszer futtasd)
+POST http://localhost:8080/api/water-logs/teszt01
 Content-Type: application/json
 
 {
-  "amountMl": 250,
-  "logDate": "2026-09-27"
+  "amountMl": 250
 }
 
-### 7. Napi WaterLog összesítés
-GET http://localhost:8080/api/water-logs/testuser?date=2026-09-27
+### 9. Víz összesítés
+GET http://localhost:8080/api/water-logs/teszt01
+
+### A. Rossz jelszó → 401
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{ "username": "teszt01", "password": "rosszjelszo" }
+
+### B. Nem létező user → 404
+GET http://localhost:8080/api/food-logs/nincsilyenuser
+
+### C. Foglalt username → 409
+POST http://localhost:8080/api/register
+Content-Type: application/json
+
+{ "username": "teszt01", "email": "uj@example.com", "password": "teszt1234" }
+
+### D. Ismeretlen allergén → 400
+POST http://localhost:8080/api/profile/teszt01
+Content-Type: application/json
+
+{ "firstName": "Teszt", "age": 25, "weight": 75, "height": 180, "gender": "male",
+  "goal": "lose", "activityLevel": 1.55, "allergies": ["LAKTOZ"] }
+
+### E. Negatív mennyiség → 400
+POST http://localhost:8080/api/food-logs/teszt01
+Content-Type: application/json
+
+{ "foodId": 1, "quantityGrams": -50, "mealType": "LUNCH" }
+
+### F. Nem létező napló törlése → 404
+DELETE http://localhost:8080/api/food-logs/99999

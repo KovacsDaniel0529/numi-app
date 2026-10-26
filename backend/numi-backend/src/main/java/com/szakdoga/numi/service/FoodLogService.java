@@ -1,6 +1,8 @@
 package com.szakdoga.numi.service;
 import com.szakdoga.numi.dto.FoodLogRequestDTO;
 import com.szakdoga.numi.dto.FoodLogResponseDTO;
+import com.szakdoga.numi.exception.BadRequestException;
+import com.szakdoga.numi.exception.ResourceNotFoundException;
 import com.szakdoga.numi.mapper.FoodLogMapper;
 import com.szakdoga.numi.model.AppUser;
 import com.szakdoga.numi.model.Food;
@@ -23,11 +25,17 @@ public class FoodLogService {
     private final FoodLogMapper foodLogMapper;
 
     public FoodLogResponseDTO addFoodLog(String username, FoodLogRequestDTO request) {
+        if (request.getQuantityGrams() == null || request.getQuantityGrams().signum() <= 0) {
+            throw new BadRequestException("A mennyiségnek nagyobbnak kell lennie nullánál!");
+        }
+        if (request.getFoodId() == null || request.getMealType() == null) {
+            throw new BadRequestException("Az étel és az étkezés típusa kötelező!");
+        }
         AppUser user = appUserRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Nincs ilyen felhasználó!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Felhasználó nem található: " + username));
 
         Food food = foodRepository.findById(request.getFoodId())
-                .orElseThrow(() -> new RuntimeException("Nincs ilyen alapanyag!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Nincs ilyen alapanyag!"));
 
         FoodLog foodLog = FoodLog.builder()
                 .appUser(user)
@@ -43,7 +51,7 @@ public class FoodLogService {
 
     public List<FoodLogResponseDTO> getDailyLog(String username, LocalDate date) {
         AppUser user = appUserRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Nincs ilyen felhasználó!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Felhasználó nem található: " + username));
 
         LocalDate targetDate = date != null ? date : LocalDate.now();
 
@@ -54,6 +62,9 @@ public class FoodLogService {
     }
 
     public void deleteFoodLog(Long id) {
+        if (!foodLogRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Nincs ilyen naplóbejegyzés!");
+        }
         foodLogRepository.deleteById(id);
     }
 }

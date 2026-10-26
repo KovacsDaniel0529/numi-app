@@ -1,5 +1,9 @@
 package com.szakdoga.numi.service;
 
+import com.szakdoga.numi.exception.BadRequestException;
+import com.szakdoga.numi.exception.ConflictException;
+import com.szakdoga.numi.exception.ResourceNotFoundException;
+import com.szakdoga.numi.exception.UnauthorizedException;
 import com.szakdoga.numi.model.AppUser;
 import com.szakdoga.numi.model.ProfileDetail;
 import com.szakdoga.numi.repository.AppUserRepository;
@@ -22,23 +26,23 @@ public class AppUserService {
 
         // 1. Ellenőrzés: Foglalt-e a név?
         if (appUserRepository.findByUsername(userToSave.getUsername()).isPresent()) {
-            throw new RuntimeException("Ez a felhasználónév már foglalt!");
+            throw new ConflictException("Ez a felhasználónév már foglalt!");
+        }
+        if (appUserRepository.existsByEmail(userToSave.getEmail())) {
+            throw new ConflictException("Ez az email cím már regisztrálva van!");
         }
         return appUserRepository.save(userToSave);
     }
     // Bejelentkezés rész:
     public AppUser login(String username, String password) {
         // 1. Megkeressük a felhasználót
-        
+
         AppUser user = appUserRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Nincs ilyen felhasználó!"));
+                .orElseThrow(() -> new UnauthorizedException("Hibás felhasználónév vagy jelszó!"));
 
-        // 2. Jelszó ellenőrzés
         if (!user.getPassword().equals(password)) {
-            throw new RuntimeException("Hibás jelszó!");
+            throw new UnauthorizedException("Hibás felhasználónév vagy jelszó!");
         }
-
-        // 3. Siker
         return user;
     }
     
@@ -67,33 +71,46 @@ public class AppUserService {
         return (int) Math.round(tdee); // Súlytartás
     }
 
-    public ProfileDetail saveProfile(String username, ProfileDetail profilAdatok) {
+    public ProfileDetail saveProfile(String username, ProfileDetail incoming) {
         AppUser user = appUserRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Nincs ilyen felhasználó!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Felhasználó nem található: " + username));
 
-        // Kalória számítás (a meglévő logikád alapján)
-        Integer calorieGoal = calculateDailyCalories(profilAdatok);
-        profilAdatok.setDailyCalorieGoal(calorieGoal);
+        if (incoming.getWeight() == null || incoming.getHeight() == null
+                || incoming.getAge() == null || incoming.getActivityLevel() == null) {
+            throw new BadRequestException("Hiányzó profiladat (súly, magasság, kor vagy aktivitási szint)!");
+        }
 
-        Integer waterGoal = calculateDailyWaterGoal(profilAdatok);
-        profilAdatok.setDailyWaterGoalMl(waterGoal);
+        // Ha már van profilja, azt módosítjuk, különben újat készítünk
+        ProfileDetail profile = user.getProfileDetail() != null
+                ? user.getProfileDetail()
+                : new ProfileDetail();
 
-        profilAdatok.setUser(user);
+        profile.setFirstName(incoming.getFirstName());
+        profile.setAge(incoming.getAge());
+        profile.setWeight(incoming.getWeight());
+        profile.setHeight(incoming.getHeight());
+        profile.setGender(incoming.getGender());
+        profile.setGoal(incoming.getGoal());
+        profile.setActivityLevel(incoming.getActivityLevel());
+        profile.setDietaryPreference(incoming.getDietaryPreference());
+        profile.setAllergies(incoming.getAllergies());
+        profile.setDigestiveIssues(incoming.getDigestiveIssues());
 
-        // Elmentjük a profilt
-        ProfileDetail savedProfile = profileDetailRepository.save(profilAdatok);
+        profile.setDailyCalorieGoal(calculateDailyCalories(profile));
+        profile.setDailyWaterGoalMl(calculateDailyWaterGoal(profile));
+        profile.setUser(user);
 
-        // Összekötjük a userrel és őt is mentjük
+        ProfileDetail savedProfile = profileDetailRepository.save(profile);
+
         user.setProfileDetail(savedProfile);
         appUserRepository.save(user);
 
-        // VISSZATÉRÜNK a mentett profillal!
         return savedProfile;
     }
 
     public AppUser findByUsername(String username) {
         return appUserRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Felhasználó nem található: " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("Felhasználó nem található: " + username));
     }
 
     private Integer calculateDailyWaterGoal(ProfileDetail profile) {
