@@ -3,6 +3,8 @@ package com.szakdoga.numi.repository;
 import com.szakdoga.numi.model.AppUser;
 import com.szakdoga.numi.model.FoodLog;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -15,4 +17,11 @@ public interface FoodLogRepository extends JpaRepository<FoodLog, Long> {
 
     // Egy adott user bejegyzései egy időintervallumban (ez a "Naptár" oldalhoz kell majd)
     List<FoodLog> findByAppUserAndLogDateBetween(AppUser appUser, LocalDate startDate, LocalDate endDate);
+
+    @Query("SELECT fl FROM FoodLog fl JOIN FETCH fl.food " +
+            "WHERE fl.appUser = :appUser AND fl.logDate BETWEEN :start AND :end " +
+            "ORDER BY fl.logDate")
+    List<FoodLog> findWithFoodInRange(@Param("appUser") AppUser appUser,
+                                      @Param("start") LocalDate start,
+                                      @Param("end") LocalDate end);
 }

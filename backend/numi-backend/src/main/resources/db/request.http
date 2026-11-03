@@ -102,3 +102,30 @@ Content-Type: application/json
 
 ### F. Nem létező napló törlése → 404
 DELETE http://localhost:8080/api/food-logs/99999
+
+### 1. Étel másik napra (tej, reggeli) - a foodId-t írd át egy létezőre!
+POST http://localhost:8080/api/food-logs/teszt01
+Content-Type: application/json
+
+{ "foodId": 1, "quantityGrams": 200, "mealType": "BREAKFAST", "logDate": "2026-10-27" }
+
+### 2. Víz másik napra
+POST http://localhost:8080/api/water-logs/teszt01
+Content-Type: application/json
+
+{ "amountMl": 750, "logDate": "2026-10-28" }
+
+### 3. Napi részletek (amikor az első tesztet futtattad)
+GET http://localhost:8080/api/calendar/teszt01/day?date=2026-10-26
+
+### 4. Havi áttekintés
+GET http://localhost:8080/api/calendar/teszt01/month?year=2026&month=10
+
+### 5. Üres nap: nem hiba, csak nullák
+GET http://localhost:8080/api/calendar/teszt01/day?date=2026-10-01
+
+### 6. Érvénytelen hónap: 400
+GET http://localhost:8080/api/calendar/teszt01/month?year=2026&month=13
+
+### 7. Nem létező user: 404
+GET http://localhost:8080/api/calendar/nincsilyen/day
