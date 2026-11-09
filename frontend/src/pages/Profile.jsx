@@ -1,6 +1,8 @@
 import React, { useState, useContext } from "react";
 import { UserContext } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
+import { updateWeight } from "../api/profileApi";
+import { allergenLabel } from "../constants/allergens";
 import {
   User,
   Scale,
@@ -11,9 +13,43 @@ import {
   ChartSpline,
 } from "lucide-react";
 
+const GOAL_LABELS = {
+  lose: "Fogyás",
+  maintain: "Súlytartás",
+  gain: "Izomépítés",
+};
+const GENDER_LABELS = { male: "Férfi", female: "Nő" };
+const ACTIVITY_LABELS = {
+  1.2: "Ülőmunka",
+  1.375: "Mérsékelt",
+  1.55: "Aktív",
+  1.725: "Nagyon aktív",
+};
 const Profile = () => {
-  const { user, refreshUser, loading, setUser } = useContext(UserContext);
+  const { user, refreshUser, loading, logout } = useContext(UserContext);
+  const [newWeight, setNewWeight] = useState("");
+  const [weightError, setWeightError] = useState("");
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
+
+  const handleWeightSave = async () => {
+    const value = parseFloat(newWeight);
+    if (!value || value < 25 || value > 400) {
+      setWeightError("Kérlek, valós testsúlyt adj meg (25–400 kg)!");
+      return;
+    }
+    setSaving(true);
+    setWeightError("");
+    try {
+      await updateWeight(user.username, value);
+      await refreshUser();
+      setNewWeight("");
+    } catch (err) {
+      setWeightError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // 1. Definiáljuk az aktív fület
   const [activeTab, setActiveTab] = useState("general");
@@ -28,9 +64,8 @@ const Profile = () => {
 
   // 3. Kijelentkezés kezelése
   const handleLogout = () => {
-    localStorage.removeItem("user"); // Töröljük a tárolóból
-    setUser(null); // Töröljük a "hűtőből" (Context)
-    navigate("/login"); // Irány a bejelentkezés
+    logout();
+    navigate("/login");
   };
 
   if (loading)
@@ -126,11 +161,8 @@ const Profile = () => {
                     Neme
                   </label>
                   <p className="text-lg text-white mt-1">
-                    {user.profileDetail?.gender === "male"
-                      ? "Férfi"
-                      : user.profileDetail?.gender === "female"
-                        ? "Nő"
-                        : "Nincs megadva"}
+                    {GENDER_LABELS[user.profileDetail?.gender] ??
+                      "Nincs megadva"}
                   </p>
                 </div>
                 <div>
@@ -146,13 +178,7 @@ const Profile = () => {
                     Cél
                   </label>
                   <p className="text-lg text-white mt-1">
-                    {user.profileDetail?.goal === "lose"
-                      ? "Fogyás"
-                      : user.profileDetail?.gender === "maintain"
-                        ? "Súlytartás"
-                        : user.profileDetail?.goal === "gain"
-                          ? "Izomépítés"
-                          : "Nincs megadva"}
+                    {GOAL_LABELS[user.profileDetail?.goal] ?? "Nincs megadva"}
                   </p>
                 </div>
               </div>
@@ -182,15 +208,24 @@ const Profile = () => {
                   <div className="flex gap-3">
                     <input
                       type="number"
+                      value={newWeight}
+                      onChange={(e) => setNewWeight(e.target.value)}
                       placeholder={
                         user.profileDetail?.weight?.toString() || "80"
                       }
                       className="flex-1 bg-[#1c252e] border border-gray-700 rounded-xl px-4 py-3 outline-none focus:border-[#22c55e] transition-all text-white"
                     />
-                    <button className="bg-[#22c55e] text-[#12181f] font-bold px-6 py-3 rounded-xl hover:bg-[#1da850] transition-colors">
-                      Mentés
+                    <button
+                      onClick={handleWeightSave}
+                      disabled={saving}
+                      className="bg-[#22c55e] text-[#12181f] font-bold px-6 py-3 rounded-xl hover:bg-[#1da850] transition-colors disabled:opacity-50"
+                    >
+                      {saving ? "Mentés..." : "Mentés"}
                     </button>
                   </div>
+                  {weightError && (
+                    <p className="text-red-400 text-sm">{weightError}</p>
+                  )}
                 </div>
                 <div className="mt-8">
                   <h3 className="text-xl font-bold text-white border-b border-gray-800 pb-4 mb-4 flex items-center gap-2">
@@ -206,7 +241,7 @@ const Profile = () => {
                           key={index}
                           className="px-4 py-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-full text-sm font-lemon uppercase tracking-wider"
                         >
-                          {allergy}
+                          {allergenLabel(allergy)}
                         </span>
                       ))
                     ) : (
@@ -241,13 +276,7 @@ const Profile = () => {
                   Cél
                 </label>
                 <p className="text-lg text-white mt-1">
-                  {user.profileDetail?.goal === "lose"
-                    ? "Fogyás"
-                    : user.profileDetail?.gender === "maintain"
-                      ? "Súlytartás"
-                      : user.profileDetail?.goal === "gain"
-                        ? "Izomépítés"
-                        : "Nincs megadva"}
+                  {GOAL_LABELS[user.profileDetail?.goal] ?? "Nincs megadva"}
                 </p>
               </div>
               <div>
@@ -255,15 +284,8 @@ const Profile = () => {
                   Aktivitási szint
                 </label>
                 <p className="text-lg text-white mt-1">
-                  {user.profileDetail?.activityLevel === 1.2
-                    ? "Ülőmunka"
-                    : user.profileDetail?.activityLevel === 1.375
-                      ? "Mérsékelt"
-                      : user.profileDetail?.activityLevel === 1.55
-                        ? "Aktív"
-                        : user.profileDetail?.activityLevel === 1.725
-                          ? "Nagyon aktív"
-                          : "Nincs megadva"}
+                  {ACTIVITY_LABELS[user.profileDetail?.activityLevel] ??
+                    "Nincs megadva"}
                 </p>
               </div>
               <div>
@@ -272,6 +294,16 @@ const Profile = () => {
                 </label>
                 <p className="text-lg text-white mt-1">
                   {user.profileDetail?.dailyCalorieGoal}
+                </p>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  Napi vízcél
+                </label>
+                <p className="text-lg text-white mt-1">
+                  {user.profileDetail?.dailyWaterGoalMl
+                    ? `${user.profileDetail.dailyWaterGoalMl} ml`
+                    : "Nincs megadva"}
                 </p>
               </div>
             </div>

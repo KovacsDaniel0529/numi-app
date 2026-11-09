@@ -1,4 +1,5 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from "react";
+import { getUser } from "../api/authApi";
 
 export const UserContext = createContext();
 
@@ -6,25 +7,31 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Ez a függvény bármikor újratölthető a backendről
+  const logout = () => {
+    localStorage.removeItem("user");
+    setUser(null);
+  };
+
   const refreshUser = async () => {
-    const savedUser = JSON.parse(localStorage.getItem('user'));
-    if (!savedUser || !savedUser.username) {
+    let savedUser = null;
+    try {
+      savedUser = JSON.parse(localStorage.getItem("user"));
+    } catch {
+      localStorage.removeItem("user");
+    }
+
+    if (!savedUser?.username) {
       setLoading(false);
       return;
     }
 
     try {
-      // Itt a te meglévő /stats/végpontodat használjuk a frissítéshez!
-      const response = await fetch(`http://localhost:8080/api/stats/${savedUser.username}`);
-      if (response.ok) {
-        const freshData = await response.json();
-        setUser(freshData);
-        // Frissítjük a biztonsági másolatot is
-        localStorage.setItem('user', JSON.stringify(freshData));
-      }
+      const freshData = await getUser(savedUser.username);
+      setUser(freshData);
+      localStorage.setItem("user", JSON.stringify(freshData));
     } catch (err) {
-      console.error("Hiba a felhasználó frissítésekor:", err);
+      if (err.status === 404) logout();
+      else console.error("Hiba a felhasználó frissítésekor:", err);
     } finally {
       setLoading(false);
     }
@@ -35,7 +42,9 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser, refreshUser, loading }}>
+    <UserContext.Provider
+      value={{ user, setUser, refreshUser, logout, loading }}
+    >
       {children}
     </UserContext.Provider>
   );

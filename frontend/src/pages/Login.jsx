@@ -1,63 +1,42 @@
-import { useState, useContext } from 'react' // useContext hozzáadva
-import { Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { User, Lock, ArrowRight } from 'lucide-react'
-import { UserContext } from '../context/UserContext' // Importáld a saját Contextedet!
+import { useState, useContext } from "react"; // useContext hozzáadva
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { User, Lock, ArrowRight } from "lucide-react";
+import { UserContext } from "../context/UserContext"; // Importáld a saját Contextedet!
+import { login } from "../api/authApi";
 
 const Login = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   // Itt kérjük le a setUser függvényt a közös tárolóból
-  const { setUser } = useContext(UserContext)
+  const { setUser } = useContext(UserContext);
 
   const [formData, setFormData] = useState({
-    username: '',
-    password: ''
-  })
-  const [error, setError] = useState(null)
+    username: "",
+    password: "",
+  });
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
     try {
-      const response = await fetch('http://localhost:8080/api/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(formData)
-    });
-
-      if (!response.ok) {
-        throw new Error('Hibás felhasználónév vagy jelszó!')
-      }
-
-      const userData = await response.json()
-      
-      // 1. Mentés a böngésző tartós tárolójába (hogy refresh után is meglegyen)
-      localStorage.setItem('user', JSON.stringify(userData))
-
-      // 2. KRITIKUS LÉPÉS: Frissítjük a Context állapotát is!
-      // Ez szól az összes többi komponensnek (pl. Profile), hogy megérkezett az adat.
-      setUser(userData)
-
-      // 3. Navigáció az adatok alapján
-      if (userData.profileDetail === null) {
-        navigate('/onboarding')
-      } else {
-        navigate('/diary') 
-      }
-
+      const userData = await login(formData);
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+      navigate(userData.profileDetail ? "/diary" : "/onboarding");
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-[80vh] px-4 relative z-10">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
@@ -72,9 +51,9 @@ const Login = () => {
             "Az út az egészséghez a következő lépéssel kezdődik."
           </p>
         </div>
-        
+
         {error && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-2xl mb-6 text-sm text-center font-lemon"
@@ -87,12 +66,12 @@ const Login = () => {
           {/* Felhasználónév */}
           <div className="relative group">
             <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-[#68D391] transition-colors" />
-            <input 
-              type="text" 
-              name="username" 
+            <input
+              type="text"
+              name="username"
               placeholder="Felhasználónév"
-              onChange={handleChange} 
-              required 
+              onChange={handleChange}
+              required
               className="w-full bg-[#1a1f26] border border-white/10 p-4 pl-12 rounded-2xl text-white outline-none focus:border-[#68D391] transition-all font-lemon"
             />
           </div>
@@ -100,34 +79,37 @@ const Login = () => {
           {/* Jelszó */}
           <div className="relative group">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-[#68D391] transition-colors" />
-            <input 
-              type="password" 
-              name="password" 
-              onChange={handleChange} 
+            <input
+              type="password"
+              name="password"
+              onChange={handleChange}
               placeholder="Jelszó"
-              required 
+              required
               className="w-full bg-[#1a1f26] border border-white/10 p-4 pl-12 rounded-2xl text-white outline-none focus:border-[#68D391] transition-all font-lemon"
             />
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="w-full bg-gradient-to-r from-[#68D391] to-teal-500 text-white py-4 rounded-2xl font-lemon text-lg uppercase tracking-widest shadow-[0_0_20px_rgba(104,211,145,0.3)] hover:shadow-[0_0_30px_rgba(104,211,145,0.5)] transition-all flex items-center justify-center gap-2 group active:scale-95"
           >
             Bejelentkezés
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
         </form>
-        
+
         <p className="mt-8 text-center text-slate-400 font-lemon text-sm">
-          Még nincs fiókod? 
-          <Link to="/register" className="text-[#68D391] font-bold hover:underline ml-2 transition-all">
+          Még nincs fiókod?
+          <Link
+            to="/register"
+            className="text-[#68D391] font-bold hover:underline ml-2 transition-all"
+          >
             Regisztrálj itt
           </Link>
         </p>
       </motion.div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

@@ -7,7 +7,7 @@ const Navbar = () => {
 
   const navItems = [
     { name: "Napló", href: "/diary" },
-    { name: "Kajapédia", href: "/addFood" },
+    { name: "Kajapédia", href: "/add-food" },
     { name: "Naptár", href: "/calendar" },
     { name: "Receptek", href: "/recipes" },
     { name: "Profil", href: "/profile" },
@@ -40,7 +40,7 @@ const Navbar = () => {
         {/* JOBB OLDAL: Menüpontok */}
         <div className="hidden md:flex items-center gap-4">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.href;
+            const isActive = location.pathname.startsWith(item.href);
             return (
               <Link
                 key={item.name}

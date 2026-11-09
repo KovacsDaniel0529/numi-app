@@ -15,6 +15,7 @@ import Navbar from "./components/Navbar";
 import Diary from "./pages/Diary";
 import Profile from "./pages/Profile";
 import AddFood from "./pages/AddFood";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function AppContent() {
   const location = useLocation();
@@ -42,13 +43,43 @@ function AppContent() {
         {showNavbar && <Navbar />}
 
         <Routes>
-          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/add-food" element={<AddFood />}></Route>
-          <Route path="/diary" element={<Diary />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route
+            path="/diary"
+            element={
+              <ProtectedRoute>
+                <Diary />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-food"
+            element={
+              <ProtectedRoute>
+                <AddFood />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-food/:mealId"
+            element={
+              <ProtectedRoute>
+                <AddFood />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/diary" replace />} />
         </Routes>
       </div>
     </div>

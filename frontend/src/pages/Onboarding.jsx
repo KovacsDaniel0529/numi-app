@@ -2,6 +2,7 @@ import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
 import AllergySelector from "../components/AllergySelector";
+import { saveProfile } from "../api/profileApi";
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -109,23 +110,11 @@ const Onboarding = () => {
     };
 
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/profile/${user.username}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(finalData),
-        },
-      );
-
-      if (response.ok) {
-        await refreshUser();
-        navigate("/diary");
-      } else {
-        console.error("Hiba történt a profil mentésekor:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Hálózati hiba:", error);
+      await saveProfile(user.username, finalData);
+      await refreshUser();
+      navigate("/diary");
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -331,6 +320,11 @@ const Onboarding = () => {
             <h2 className="text-2xl uppercase tracking-widest text-center mb-4">
               Allergiák és panaszok
             </h2>
+            {error && (
+              <div className="text-red-400 text-sm bg-red-500/10 p-3 rounded-2xl border border-red-500/20 text-center">
+                {error}
+              </div>
+            )}
             <AllergySelector
               selectedAllergies={formData.allergies}
               onToggle={(item) => toggleList("allergies", item)}

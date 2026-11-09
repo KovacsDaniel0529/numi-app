@@ -1,21 +1,5 @@
 import React from "react";
-
-const ALLERGENS = [
-  "Glutén",
-  "Rákfélék",
-  "Tojás",
-  "Hal",
-  "Földimogyoró",
-  "Szójabab",
-  "Tej és tejtermékek (kazein)",
-  "Diófélék",
-  "Zeller",
-  "Mustár",
-  "Szezámmag",
-  "Kén-dioxid",
-  "Csillagfürt",
-  "Puhatestűek",
-];
+import { ALLERGENS } from "../constants/allergens";
 const AllergySelector = ({ selectedAllergies, onToggle, onClear }) => {
   return (
     <div className="space-y-4">
@@ -33,18 +17,18 @@ const AllergySelector = ({ selectedAllergies, onToggle, onClear }) => {
       </button>
 
       <div className="grid grid-cols-2 gap-3">
-        {ALLERGENS.map((allergy) => (
+        {ALLERGENS.map(({ value, label }) => (
           <button
-            key={allergy}
+            key={value}
             type="button"
-            onClick={() => onToggle(allergy)}
+            onClick={() => onToggle(value)}
             className={`p-3 rounded-xl border text-sm font-lemon transition-all ${
-              selectedAllergies.includes(allergy)
+              selectedAllergies.includes(value)
                 ? "bg-red-500/20 border-red-500 text-red-400"
                 : "bg-white/5 border-white/10 text-slate-300 hover:border-white/20"
             }`}
           >
-            {allergy}
+            {label}
           </button>
         ))}
       </div>
