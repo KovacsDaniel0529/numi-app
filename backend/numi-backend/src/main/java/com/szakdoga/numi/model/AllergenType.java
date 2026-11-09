@@ -10,5 +10,9 @@ public enum AllergenType {
     FISH,
     SHELLFISH,
     SESAME,
-    MUSTARD
+    MUSTARD,
+    CELERY,
+    SULPHITES,
+    LUPIN,
+    MOLLUSCS
 }

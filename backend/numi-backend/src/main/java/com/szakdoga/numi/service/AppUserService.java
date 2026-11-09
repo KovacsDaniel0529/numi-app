@@ -9,6 +9,7 @@ import com.szakdoga.numi.model.ProfileDetail;
 import com.szakdoga.numi.repository.AppUserRepository;
 import com.szakdoga.numi.repository.ProfileDetailRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AppUserService {
@@ -116,5 +117,23 @@ public class AppUserService {
     private Integer calculateDailyWaterGoal(ProfileDetail profile) {
         // Ökölszabály: kb. 33 ml víz / testsúly kg
         return (int) Math.round(profile.getWeight() * 33);
+    }
+    @Transactional
+    public ProfileDetail updateWeight(String username, Double newWeight) {
+        if (newWeight == null || newWeight < 25 || newWeight > 400) {
+            throw new BadRequestException("Érvénytelen testsúly (25–400 kg között add meg)!");
+        }
+
+        AppUser user = findByUsername(username);
+        ProfileDetail profile = user.getProfileDetail();
+        if (profile == null) {
+            throw new ResourceNotFoundException("A felhasználónak még nincs profilja!");
+        }
+
+        profile.setWeight(newWeight);
+        profile.setDailyCalorieGoal(calculateDailyCalories(profile));
+        profile.setDailyWaterGoalMl(calculateDailyWaterGoal(profile));
+
+        return profileDetailRepository.save(profile);
     }
 }

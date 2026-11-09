@@ -2,6 +2,7 @@ package com.szakdoga.numi.controller;
 
 import com.szakdoga.numi.dto.ProfileRequestDTO;
 import com.szakdoga.numi.dto.ProfileResponseDTO;
+import com.szakdoga.numi.dto.WeightUpdateRequestDTO;
 import com.szakdoga.numi.mapper.ProfileMapper;
 import com.szakdoga.numi.model.ProfileDetail;
 import com.szakdoga.numi.service.AppUserService;
@@ -27,5 +28,14 @@ public class ProfileDetailController {
         ProfileDetail profile = profileMapper.toEntity(dto);
         ProfileDetail savedProfile = appUserService.saveProfile(username, profile);
         return ResponseEntity.ok(profileMapper.toDto(savedProfile));
+    }
+    // PATCH http://localhost:8080/api/profile/teszt01/weight
+    @PatchMapping("/{username}/weight")
+    public ResponseEntity<ProfileResponseDTO> updateWeight(
+            @PathVariable String username,
+            @RequestBody WeightUpdateRequestDTO dto
+    ) {
+        ProfileDetail updated = appUserService.updateWeight(username, dto.getWeight());
+        return ResponseEntity.ok(profileMapper.toDto(updated));
     }
 }

@@ -129,3 +129,15 @@ GET http://localhost:8080/api/calendar/teszt01/month?year=2026&month=13
 
 ### 7. Nem létező user: 404
 GET http://localhost:8080/api/calendar/nincsilyen/day
+
+### Súly frissítése
+PATCH http://localhost:8080/api/profile/teszt01/weight
+Content-Type: application/json
+
+{ "weight": 82 }
+
+### Érvénytelen súly: 400
+PATCH http://localhost:8080/api/profile/teszt01/weight
+Content-Type: application/json
+
+{ "weight": 5 }
