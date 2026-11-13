@@ -15,6 +15,7 @@ import Navbar from "./components/Navbar";
 import Diary from "./pages/Diary";
 import Profile from "./pages/Profile";
 import AddFood from "./pages/AddFood";
+import Calendar from "./pages/Calendar";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function AppContent() {
@@ -71,6 +72,7 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
           <Route
             path="/profile"
             element={

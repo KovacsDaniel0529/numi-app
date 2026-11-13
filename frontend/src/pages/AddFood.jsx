@@ -1,18 +1,19 @@
-import React, { useState, useContext } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useContext, useEffect, useMemo } from "react";
+import { useParams, Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   Search,
-  ArrowLeft,
   Check,
   Flame,
-  Sparkles,
   ShieldAlert,
   Utensils,
   Info,
-  ChevronRight,
-  Plus,
 } from "lucide-react";
 import { UserContext } from "../context/UserContext";
+import { getFoods } from "../api/foodApi";
+import { addFoodLog } from "../api/logApi";
+import { allergenLabel } from "../constants/allergens";
+import { todayLocal } from "../utils/date";
 
 const MEALS = [
   { id: "breakfast", name: "Reggeli", icon: "🍳" },
@@ -21,55 +22,111 @@ const MEALS = [
   { id: "snack", name: "Nassolás", icon: "🍎" },
 ];
 
+// Ékezet- és kis-nagybetű nélküli összehasonlításhoz ("tejfol" megtalálja a "Tejföl"-t)
+const normalize = (text) =>
+  text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
 export default function AddFood() {
   const { user } = useContext(UserContext);
+  const { mealId } = useParams();
 
-  // Állapotok
   const [selectedMeal, setSelectedMeal] = useState(
-    "breakfast",
-    "lunch",
-    "dinner",
-    "snack",
+    MEALS.some((m) => m.id === mealId) ? mealId : "breakfast",
   );
-  const [activeTab, setActiveTab] = useState("all"); // 'all', 'foods', 'recipe'
+  const [foods, setFoods] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [reloadCount, setReloadCount] = useState(0);
+
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("all");
   const [selectedFood, setSelectedFood] = useState(null);
   const [amount, setAmount] = useState(100);
 
-  // Minta adatbázis tételek
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const userAllergies = user?.profileDetail?.allergies || [];
   const currentMealObj = MEALS.find((m) => m.id === selectedMeal);
 
-  // Szűrés
-  const filteredFoods = databaseFoods.filter((food) => {
-    const matchesSearch =
-      food.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (food.brand &&
-        food.brand.toLowerCase().includes(searchQuery.toLowerCase()));
+  // Az ételek betöltése egyszer (a felhasználó allergiáival együtt)
+  useEffect(() => {
+    if (!user?.username) return;
+    let cancelled = false; // ha az oldal közben bezárul, ne írjunk állapotot
 
-    if (activeTab === "recipe") return matchesSearch && food.isRecipe;
-    if (activeTab === "foods") return matchesSearch && !food.isRecipe;
-    return matchesSearch;
-  });
+    setLoading(true);
+    setLoadError("");
+    getFoods(user.username)
+      .then((data) => {
+        if (!cancelled) setFoods(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setLoadError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-  // Tápérték újraszámolása
-  const calcNutrient = (baseValue) => {
-    if (!baseValue) return 0;
-    if (selectedFood?.isRecipe) {
-      return Math.round(baseValue * (amount || 1));
-    }
-    return Math.round((baseValue * (amount || 0)) / 100);
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.username, reloadCount]);
+
+  const categories = useMemo(
+    () =>
+      [...new Set(foods.map((f) => f.category).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b, "hu"),
+      ),
+    [foods],
+  );
+
+  const filteredFoods = useMemo(() => {
+    const query = normalize(searchQuery.trim());
+    return foods.filter(
+      (food) =>
+        (activeCategory === "all" || food.category === activeCategory) &&
+        normalize(food.name).includes(query),
+    );
+  }, [foods, searchQuery, activeCategory]);
+
+  // Tápérték újraszámolása a megadott mennyiségre (az alapértékek 100 g-ra vannak)
+  const calc = (base) => Math.round(((base ?? 0) * (amount || 0)) / 10) / 10;
 
   const handleSelectFood = (food) => {
     setSelectedFood(food);
-    setAmount(food.isRecipe ? 1 : 100);
+    setAmount(100);
+    setSaveError("");
+    setSuccessMessage("");
+  };
+
+  const handleAdd = async () => {
+    if (!selectedFood || amount <= 0) return;
+
+    setSaving(true);
+    setSaveError("");
+    setSuccessMessage("");
+    try {
+      await addFoodLog(user.username, {
+        foodId: selectedFood.id,
+        quantityGrams: amount,
+        mealType: selectedMeal.toUpperCase(), // breakfast -> BREAKFAST
+        logDate: todayLocal(),
+      });
+      setSuccessMessage(
+        `Hozzáadva: ${selectedFood.name} (${amount} g) – ${currentMealObj.name}`,
+      );
+      setSelectedFood(null);
+      setAmount(100);
+    } catch (err) {
+      setSaveError(err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl text-white relative z-10">
-      {/* 1. FEJLÉC ÉS ÉTKEZÉS VÁLASZTÓ */}
+      {/* 1. FEJLÉC */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
@@ -79,11 +136,10 @@ export default function AddFood() {
             </h1>
           </div>
           <p className="text-slate-400 font-lemon text-xs md:text-sm">
-            Válassz az adatbázisból vagy a receptjeid közül.
+            Válassz az alapanyagok közül, és add meg a mennyiséget.
           </p>
         </div>
 
-        {/* Napi cél kitűzés infó */}
         <div className="bg-[#171e27]/80 backdrop-blur-md border border-white/5 px-5 py-3 rounded-2xl flex items-center gap-4">
           <div className="p-2 bg-[#68D391]/10 rounded-xl">
             <Flame className="w-5 h-5 text-[#68D391]" />
@@ -99,7 +155,7 @@ export default function AddFood() {
         </div>
       </header>
 
-      {/* 2. ÉTKEZÉSTÍPUS VÁLASZTÓ SÁV */}
+      {/* 2. ÉTKEZÉSTÍPUS VÁLASZTÓ */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {MEALS.map((meal) => (
           <button
@@ -118,53 +174,70 @@ export default function AddFood() {
         ))}
       </div>
 
-      {/* 3. KERESŐ ÉS FÜL SÁV */}
-      <div className="bg-[#171e27]/80 backdrop-blur-md p-4 md:p-6 rounded-[2rem] shadow-2xl border border-white/5 mb-8">
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-          {/* Kereső input */}
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Keresés étel vagy recept szerint..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#12181f] border border-white/10 p-3.5 pl-12 rounded-2xl text-white outline-none focus:border-[#68D391] transition-all font-lemon text-xs md:text-sm"
-            />
-          </div>
+      {/* 3. KERESŐ ÉS KATEGÓRIÁK */}
+      <div className="bg-[#171e27]/80 backdrop-blur-md p-4 md:p-6 rounded-[2rem] shadow-2xl border border-white/5 mb-8 space-y-4">
+        <div className="relative w-full md:w-96">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Keresés alapanyag szerint..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-[#12181f] border border-white/10 p-3.5 pl-12 rounded-2xl text-white outline-none focus:border-[#68D391] transition-all font-lemon text-xs md:text-sm"
+          />
+        </div>
 
-          {/* Fülek */}
-          <div className="flex gap-2 w-full md:w-auto overflow-x-auto">
-            {[
-              { id: "all", label: "Összes" },
-              { id: "foods", label: "Alapanyagok" },
-              { id: "recipe", label: "Receptek" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-5 py-2.5 rounded-xl font-lemon text-xs uppercase tracking-wider transition-all whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? "bg-[#68D391] text-[#12181f] font-bold shadow-[0_0_15px_rgba(104,211,145,0.3)]"
-                    : "bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {["all", ...categories].map((category) => (
+            <button
+              key={category}
+              onClick={() => setActiveCategory(category)}
+              className={`px-5 py-2.5 rounded-xl font-lemon text-xs uppercase tracking-wider transition-all whitespace-nowrap ${
+                activeCategory === category
+                  ? "bg-[#68D391] text-[#12181f] font-bold shadow-[0_0_15px_rgba(104,211,145,0.3)]"
+                  : "bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              {category === "all" ? "Összes" : category}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* 4. TARTALOM: BAL OLDAL (KATALÓGUS) + JOBB OLDAL (ADAGOLÓ ÉS ÖSSZESÍTŐ) */}
+      {/* 4. TARTALOM */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* BAL OSZLOP: Ételek listája (7 oszlop) */}
+        {/* BAL OSZLOP: ételek listája */}
         <div className="lg:col-span-7 space-y-3">
-          {filteredFoods.length > 0 ? (
+          {loading && (
+            <p className="text-center py-16 font-lemon text-slate-400 text-sm">
+              Betöltés...
+            </p>
+          )}
+
+          {!loading && loadError && (
+            <div className="text-center py-12 bg-red-500/10 rounded-3xl border border-red-500/20 space-y-4">
+              <p className="font-lemon text-red-400 text-sm">{loadError}</p>
+              <button
+                onClick={() => setReloadCount((c) => c + 1)}
+                className="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 font-lemon text-xs uppercase tracking-wider transition-all"
+              >
+                Újrapróbálom
+              </button>
+            </div>
+          )}
+
+          {!loading && !loadError && filteredFoods.length === 0 && (
+            <div className="text-center py-16 bg-[#171e27]/40 rounded-3xl border border-white/5">
+              <Utensils className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <p className="font-lemon text-slate-400 text-sm">
+                Nem található ilyen étel.
+              </p>
+            </div>
+          )}
+
+          {!loading &&
+            !loadError &&
             filteredFoods.map((food) => {
-              const hasAllergyConflict = food.allergens.some((a) =>
-                userAllergies.includes(a),
-              );
               const isSelected = selectedFood?.id === food.id;
 
               return (
@@ -181,86 +254,76 @@ export default function AddFood() {
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-base font-bold font-lemon text-white">
-                          {food.name}
-                        </h3>
-                        {food.isRecipe && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-lemon bg-amber-500/10 border border-amber-500/30 text-amber-400 px-2 py-0.5 rounded-lg">
-                            <Sparkles className="w-3 h-3" /> Recept
-                          </span>
-                        )}
-                      </div>
+                      <h3 className="text-base font-bold font-lemon text-white">
+                        {food.name}
+                      </h3>
                       <p className="text-xs text-slate-400 font-lemon mt-0.5">
-                        {food.brand}
+                        {food.category}
                       </p>
                     </div>
-
                     <span className="font-lemon text-sm text-[#68D391] font-bold">
                       {food.calories}{" "}
                       <span className="text-[10px] text-slate-400 font-normal">
-                        kcal / {food.servingUnit === "g" ? "100g" : "adag"}
+                        kcal / 100g
                       </span>
                     </span>
                   </div>
 
-                  {/* Allergiára figyelmeztetés */}
-                  {hasAllergyConflict && (
+                  {/* Allergén-figyelmeztetés a backendtől */}
+                  {food.allergyWarning && (
                     <div className="mt-3 flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-xl font-lemon">
                       <ShieldAlert className="w-4 h-4 flex-shrink-0" />
                       <span>
-                        Figyelem: A profilodban lévő allergént tartalmaz!
+                        Figyelem: {food.matchedAllergens.map(allergenLabel).join(", ")}{" "}
+                        – a profilodban szereplő allergén!
                       </span>
                     </div>
                   )}
 
-                  {/* Makrók sáv */}
                   <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-white/5 text-[11px] font-lemon text-slate-400">
                     <div>
                       Fehérje:{" "}
-                      <span className="text-teal-400 font-bold">
-                        {food.protein}g
-                      </span>
+                      <span className="text-teal-400 font-bold">{food.protein}g</span>
                     </div>
                     <div>
                       Szénhidrát:{" "}
-                      <span className="text-cyan-400 font-bold">
-                        {food.carbs}g
-                      </span>
+                      <span className="text-cyan-400 font-bold">{food.carbs}g</span>
                     </div>
                     <div>
                       Zsír:{" "}
-                      <span className="text-yellow-400 font-bold">
-                        {food.fat}g
-                      </span>
+                      <span className="text-yellow-400 font-bold">{food.fat}g</span>
                     </div>
                   </div>
                 </motion.div>
               );
-            })
-          ) : (
-            <div className="text-center py-16 bg-[#171e27]/40 rounded-3xl border border-white/5">
-              <Utensils className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <p className="font-lemon text-slate-400 text-sm">
-                Nem található ilyen étel.
-              </p>
-            </div>
-          )}
+            })}
         </div>
 
-        {/* JOBB OSZLOP: Adagolás és Hozzáadás Kártya (5 oszlop - Sticky) */}
+        {/* JOBB OSZLOP: adagolás és hozzáadás */}
         <div className="lg:col-span-5 sticky top-6">
           <div className="bg-[#171e27]/90 backdrop-blur-xl p-6 md:p-8 rounded-[2.5rem] shadow-2xl border border-white/10">
             <h2 className="text-lg font-lemon text-[#68D391] uppercase tracking-wider mb-6 pb-3 border-b border-white/5 flex items-center justify-between">
               <span>Étkezés rögzítése</span>
-              <span className="text-sm text-slate-400">
-                {currentMealObj?.name}
-              </span>
+              <span className="text-sm text-slate-400">{currentMealObj?.name}</span>
             </h2>
+
+            {successMessage && (
+              <div className="mb-6 text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-2xl font-lemon space-y-2">
+                <p>{successMessage}</p>
+                <Link to="/diary" className="underline text-xs">
+                  Megnyitom a Naplót
+                </Link>
+              </div>
+            )}
+
+            {saveError && (
+              <div className="mb-6 text-sm text-red-400 bg-red-500/10 border border-red-500/20 p-3 rounded-2xl font-lemon">
+                {saveError}
+              </div>
+            )}
 
             {selectedFood ? (
               <div className="space-y-6">
-                {/* Kiválasztott étel adatai */}
                 <div>
                   <label className="text-[10px] font-lemon text-slate-400 uppercase tracking-widest">
                     Kiválasztott étel
@@ -269,15 +332,28 @@ export default function AddFood() {
                     {selectedFood.name}
                   </p>
                   <span className="text-xs text-slate-400 font-lemon">
-                    {selectedFood.brand}
+                    {selectedFood.category}
                   </span>
                 </div>
 
-                {/* Mennyiség beállítása */}
+                {selectedFood.allergens?.length > 0 && (
+                  <p className="text-xs text-slate-400 font-lemon">
+                    Allergének: {selectedFood.allergens.map(allergenLabel).join(", ")}
+                  </p>
+                )}
+
+                {selectedFood.allergyWarning && (
+                  <div className="flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-xl font-lemon">
+                    <ShieldAlert className="w-4 h-4 flex-shrink-0" />
+                    <span>
+                      Ez az étel a profilodban szereplő allergént tartalmaz:{" "}
+                      {selectedFood.matchedAllergens.map(allergenLabel).join(", ")}
+                    </span>
+                  </div>
+                )}
+
                 <div className="space-y-2">
-                  <label className="text-xs font-lemon text-slate-300">
-                    Mennyiség ({selectedFood.servingUnit})
-                  </label>
+                  <label className="text-xs font-lemon text-slate-300">Mennyiség (g)</label>
                   <div className="relative">
                     <input
                       type="number"
@@ -287,63 +363,45 @@ export default function AddFood() {
                       className="w-full bg-[#12181f] border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-[#68D391] transition-all font-lemon text-lg"
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-lemon text-slate-400 uppercase">
-                      {selectedFood.servingUnit}
+                      g
                     </span>
                   </div>
                 </div>
 
-                {/* Újraszámolt tápértékek erre az adagra */}
                 <div className="bg-[#12181f]/70 border border-white/5 p-4 rounded-2xl space-y-3">
                   <div className="flex justify-between items-center font-lemon">
                     <span className="text-xs text-slate-400 uppercase tracking-wider">
                       Számított kalória
                     </span>
                     <span className="text-xl text-[#68D391] font-bold">
-                      {calcNutrient(selectedFood.calories)} kcal
+                      {Math.round(calc(selectedFood.calories))} kcal
                     </span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/5 text-xs font-lemon text-center">
                     <div className="bg-white/5 p-2 rounded-xl">
-                      <span className="block text-[10px] text-slate-500">
-                        FEHÉRJE
-                      </span>
-                      <span className="text-teal-400 font-bold">
-                        {calcNutrient(selectedFood.protein)}g
-                      </span>
+                      <span className="block text-[10px] text-slate-500">FEHÉRJE</span>
+                      <span className="text-teal-400 font-bold">{calc(selectedFood.protein)}g</span>
                     </div>
                     <div className="bg-white/5 p-2 rounded-xl">
-                      <span className="block text-[10px] text-slate-500">
-                        SZÉNHIDRÁT
-                      </span>
-                      <span className="text-cyan-400 font-bold">
-                        {calcNutrient(selectedFood.carbs)}g
-                      </span>
+                      <span className="block text-[10px] text-slate-500">SZÉNHIDRÁT</span>
+                      <span className="text-cyan-400 font-bold">{calc(selectedFood.carbs)}g</span>
                     </div>
                     <div className="bg-white/5 p-2 rounded-xl">
-                      <span className="block text-[10px] text-slate-500">
-                        ZSÍR
-                      </span>
-                      <span className="text-yellow-400 font-bold">
-                        {calcNutrient(selectedFood.fat)}g
-                      </span>
+                      <span className="block text-[10px] text-slate-500">ZSÍR</span>
+                      <span className="text-yellow-400 font-bold">{calc(selectedFood.fat)}g</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Hozzáadás gomb */}
                 <button
                   type="button"
-                  disabled={amount <= 0}
-                  onClick={() =>
-                    alert(
-                      `Hozzáadva a ${currentMealObj?.name}hez: ${selectedFood.name} (${amount} ${selectedFood.servingUnit})`,
-                    )
-                  }
+                  disabled={amount <= 0 || saving}
+                  onClick={handleAdd}
                   className="w-full bg-gradient-to-r from-[#68D391] to-teal-500 text-[#12181f] py-4 rounded-2xl font-lemon text-sm uppercase tracking-widest font-bold shadow-[0_0_20px_rgba(104,211,145,0.3)] hover:shadow-[0_0_30px_rgba(104,211,145,0.5)] transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
                 >
                   <Check className="w-5 h-5" />
-                  Hozzáadás ({currentMealObj?.name})
+                  {saving ? "Mentés..." : `Hozzáadás (${currentMealObj?.name})`}
                 </button>
               </div>
             ) : (
