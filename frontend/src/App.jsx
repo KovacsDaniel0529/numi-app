@@ -16,6 +16,7 @@ import Diary from "./pages/Diary";
 import Profile from "./pages/Profile";
 import AddFood from "./pages/AddFood";
 import Calendar from "./pages/Calendar";
+import Recipes from "./pages/Recipes";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function AppContent() {
@@ -73,6 +74,7 @@ function AppContent() {
             }
           />
           <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
+          <Route path="/recipes" element={<ProtectedRoute><Recipes /></ProtectedRoute>} />
           <Route
             path="/profile"
             element={
