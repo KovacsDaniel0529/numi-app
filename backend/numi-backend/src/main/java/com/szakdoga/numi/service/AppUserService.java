@@ -8,6 +8,7 @@ import com.szakdoga.numi.model.AppUser;
 import com.szakdoga.numi.model.ProfileDetail;
 import com.szakdoga.numi.repository.AppUserRepository;
 import com.szakdoga.numi.repository.ProfileDetailRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,22 +17,26 @@ public class AppUserService {
 
     private final AppUserRepository appUserRepository;
     private final ProfileDetailRepository profileDetailRepository;
+    private final PasswordEncoder passwordEncoder;
 
    
-    public AppUserService(AppUserRepository appUserRepository, ProfileDetailRepository profileDetailRepository) {
+    public AppUserService(AppUserRepository appUserRepository, ProfileDetailRepository profileDetailRepository, PasswordEncoder passwordEncoder) {
         this.appUserRepository = appUserRepository;
         this.profileDetailRepository = profileDetailRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public AppUser registerUser(AppUser userToSave) {
 
         // 1. Ellenőrzés: Foglalt-e a név?
-        if (appUserRepository.findByUsername(userToSave.getUsername()).isPresent()) {
+        if (appUserRepository.existsByUsernameIgnoreCase(userToSave.getUsername())) {
             throw new ConflictException("Ez a felhasználónév már foglalt!");
         }
+        
         if (appUserRepository.existsByEmail(userToSave.getEmail())) {
             throw new ConflictException("Ez az email cím már regisztrálva van!");
         }
+        userToSave.setPassword(passwordEncoder.encode(userToSave.getPassword()));
         return appUserRepository.save(userToSave);
     }
     // Bejelentkezés rész:
@@ -41,7 +46,8 @@ public class AppUserService {
         AppUser user = appUserRepository.findByUsername(username)
                 .orElseThrow(() -> new UnauthorizedException("Hibás felhasználónév vagy jelszó!"));
 
-        if (!user.getPassword().equals(password)) {
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new UnauthorizedException("Hibás felhasználónév vagy jelszó!");
         }
         return user;
@@ -136,4 +142,6 @@ public class AppUserService {
 
         return profileDetailRepository.save(profile);
     }
+
+
 }

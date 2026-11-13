@@ -32,4 +32,13 @@ public class WaterLogController {
     ) {
         return waterLogService.getDailySummary(username, date);
     }
+
+    // DELETE http://localhost:8080/api/water-logs/DANIKA/last?date=2026-11-12
+    @DeleteMapping("/{username}/last")
+    public WaterLogSummaryDTO undoLastWaterLog(
+            @PathVariable String username,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        return waterLogService.undoLastWaterLog(username, date);
+    }
 }

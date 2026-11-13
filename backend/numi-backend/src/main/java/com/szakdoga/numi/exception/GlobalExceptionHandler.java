@@ -48,6 +48,10 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR,
                 "Váratlan szerverhiba történt. Próbáld újra később!");
     }
+    @ExceptionHandler(AiServiceException.class)
+    public ResponseEntity<ErrorResponseDTO> handleAiService(AiServiceException ex) {
+        return buildResponse(HttpStatus.BAD_GATEWAY, ex.getMessage());
+    }
 
     private ResponseEntity<ErrorResponseDTO> buildResponse(HttpStatus status, String message) {
         ErrorResponseDTO body = new ErrorResponseDTO(LocalDateTime.now(), status.value(), message);

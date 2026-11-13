@@ -141,3 +141,44 @@ PATCH http://localhost:8080/api/profile/teszt01/weight
 Content-Type: application/json
 
 { "weight": 5 }
+
+### Teszt
+@username = DANIKA
+GET http://localhost:8080/api/food-logs/{{username}}
+
+GET http://localhost:8080/api/calendar/DANIKA/day?date=2026-11-12
+
+
+### Víz +250
+POST http://localhost:8080/api/water-logs/DANIKA
+Content-Type: application/json
+
+{ "amountMl": 250, "logDate": "2026-11-12" }
+
+### Víz visszavonás
+DELETE http://localhost:8080/api/water-logs/DANIKA/last?date=2026-11-12
+
+### Étel másik napra
+   POST http://localhost:8080/api/food-logs/DANIKA
+   Content-Type: application/json
+
+   { "foodId": 1, "quantityGrams": 200, "mealType": "LUNCH", "logDate": "2026-11-10" }
+
+   ### Víz másik napra
+   POST http://localhost:8080/api/water-logs/DANIKA
+   Content-Type: application/json
+
+   { "amountMl": 3700, "logDate": "2026-11-10" }
+
+### Recept kérése
+POST http://localhost:8080/api/recipes/DANIKA
+Content-Type: application/json
+
+{ "preferences": "vacsora, gyors" }
+
+### Gemini sebesség teszt
+POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent
+x-goog-api-key: IDE_A_KULCSOD
+Content-Type: application/json
+
+{ "contents": [ { "parts": [ { "text": "Adj egy rövid csirkés vacsora receptet magyarul." } ] } ] }

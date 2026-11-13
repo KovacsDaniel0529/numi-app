@@ -9,6 +9,7 @@ import com.szakdoga.numi.repository.AppUserRepository;
 import com.szakdoga.numi.repository.WaterLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -58,5 +59,18 @@ public class WaterLogService {
                 .totalAmountMl(total)
                 .goalMl(goal)
                 .build();
+    }
+    @Transactional
+    public WaterLogSummaryDTO undoLastWaterLog(String username, LocalDate date) {
+        AppUser user = appUserRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Nincs ilyen felhasználó!"));
+
+        LocalDate targetDate = date != null ? date : LocalDate.now();
+
+        waterLogRepository
+                .findFirstByAppUserAndLogDateOrderByIdDesc(user, targetDate)
+                .ifPresent(waterLogRepository::delete);
+
+        return buildSummary(user, targetDate);
     }
 }

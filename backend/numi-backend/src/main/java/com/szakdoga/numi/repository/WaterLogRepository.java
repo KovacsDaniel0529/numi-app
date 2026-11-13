@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface WaterLogRepository extends JpaRepository<WaterLog, Long> {
@@ -17,7 +18,7 @@ public interface WaterLogRepository extends JpaRepository<WaterLog, Long> {
     // Az adatbázis maga összegzi - nem kell Java-ban listát összeadni
     @Query("SELECT COALESCE(SUM(w.amountMl), 0) FROM WaterLog w WHERE w.appUser = :appUser AND w.logDate = :logDate")
     Integer sumAmountByAppUserAndLogDate(AppUser appUser, LocalDate logDate);
-
+    Optional<WaterLog> findFirstByAppUserAndLogDateOrderByIdDesc(AppUser appUser, LocalDate logDate);
 
 
     @Query("SELECT w.logDate AS logDate, SUM(w.amountMl) AS totalMl " +
