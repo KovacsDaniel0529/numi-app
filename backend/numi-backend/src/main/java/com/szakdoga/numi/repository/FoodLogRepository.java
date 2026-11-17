@@ -24,4 +24,5 @@ public interface FoodLogRepository extends JpaRepository<FoodLog, Long> {
     List<FoodLog> findWithFoodInRange(@Param("appUser") AppUser appUser,
                                       @Param("start") LocalDate start,
                                       @Param("end") LocalDate end);
+    void deleteByAppUser(AppUser appUser);
 }

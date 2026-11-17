@@ -28,5 +28,5 @@ public interface WaterLogRepository extends JpaRepository<WaterLog, Long> {
     List<DailyWaterTotal> sumByDay(@Param("appUser") AppUser appUser,
                                    @Param("start") LocalDate start,
                                    @Param("end") LocalDate end);
-
+    void deleteByAppUser(AppUser appUser);
 }
