@@ -7,6 +7,7 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static com.szakdoga.numi.model.AllergenType.*;
 
@@ -41,6 +42,56 @@ public class RecipeSafetyChecker {
             Map.entry(LUPIN, List.of("lupin*", "csillagfurt*")),
             Map.entry(MOLLUSCS, List.of("kagylo*", "csiga*", "kalamari*", "tintahal*", "polip*", "osztriga*"))
     );
+
+    // ---- Étrendi preferenciák (vegetáriánus, vegán, pescetáriánus) ----
+
+    private static final List<String> MEAT = List.of("hus*", "csirke*", "pulyka*", "marha*", "serte*", "diszno*",
+            "kacsa*", "liba*", "barany*", "borju*", "nyul*", "szalonna*", "sonka*", "kolbasz*", "virsli*",
+            "szalami*", "bacon", "pacal*", "oldalas*", "zselatin*", "kocsonya*");
+
+    private static final List<String> HONEY = List.of("mez", "mezet", "mezzel");
+
+    // Hal és tenger gyümölcsei: ugyanazok a kulcsszavak, mint az allergéneknél
+    private static final List<String> SEAFOOD = Stream.of(FISH, SHELLFISH, MOLLUSCS)
+            .flatMap(a -> KEYWORDS.get(a).stream()).toList();
+
+    private static final List<String> DAIRY_AND_EGG = Stream.of(LACTOSE, EGG)
+            .flatMap(a -> KEYWORDS.get(a).stream()).toList();
+
+    private static final Map<String, String> DIET_NAMES = Map.of(
+            "vegetarian", "vegetáriánus",
+            "vegan", "vegán",
+            "pescatarian", "pescetáriánus");
+
+    /**
+     * Étrendi preferencia ellenőrzése. Ugyanúgy működik, mint az allergéneknél:
+     * az AI-ra nem bízzuk a döntést, a program is megnézi.
+     * Ismeretlen vagy üres érték ("omnivore", null) esetén nincs tiltott alapanyag.
+     */
+    public List<String> findDietViolations(List<String> ingredients, String diet) {
+        List<String> violations = new ArrayList<>();
+        if (ingredients == null || diet == null) {
+            return violations;
+        }
+
+        List<String> forbidden = switch (diet) {
+            case "vegetarian" -> Stream.concat(MEAT.stream(), SEAFOOD.stream()).toList();
+            case "vegan" -> Stream.of(MEAT, SEAFOOD, DAIRY_AND_EGG, HONEY).flatMap(List::stream).toList();
+            case "pescatarian" -> MEAT;
+            default -> List.of();
+        };
+
+        for (String ingredient : ingredients) {
+            String[] words = normalize(ingredient).split("[^a-z]+");
+            for (String keyword : forbidden) {
+                if (anyWordMatches(words, keyword)) {
+                    violations.add(ingredient + " (" + DIET_NAMES.getOrDefault(diet, diet) + " étrend)");
+                    break;
+                }
+            }
+        }
+        return violations;
+    }
 
     /** Visszaadja a talált problémákat (üres lista = nincs tiltott alapanyag). */
     public List<String> findViolations(List<String> ingredients, List<AllergenType> allergies) {

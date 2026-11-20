@@ -33,7 +33,7 @@ public class AppUserService {
             throw new ConflictException("Ez a felhasználónév már foglalt!");
         }
         
-        if (appUserRepository.existsByEmail(userToSave.getEmail())) {
+        if (appUserRepository.existsByEmailIgnoreCase(userToSave.getEmail())) {
             throw new ConflictException("Ez az email cím már regisztrálva van!");
         }
         userToSave.setPassword(passwordEncoder.encode(userToSave.getPassword()));

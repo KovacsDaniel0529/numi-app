@@ -18,6 +18,7 @@ public class ProfileResponseDTO {
     private Double activityLevel;
     private String dietaryPreference;
     private List<AllergenType> allergies;
+    private List<String> digestiveIssues; // ÚJ: eddig nem jutott el a frontendig
     private Integer dailyCalorieGoal;
     private Integer dailyWaterGoalMl;
 

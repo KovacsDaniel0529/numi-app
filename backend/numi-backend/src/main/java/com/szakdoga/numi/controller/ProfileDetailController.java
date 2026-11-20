@@ -9,6 +9,7 @@ import com.szakdoga.numi.service.AppUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/profile")
@@ -23,8 +24,7 @@ public class ProfileDetailController {
     @PostMapping("/{username}")
     public ResponseEntity<ProfileResponseDTO> saveProfile(
             @PathVariable String username,
-            @RequestBody ProfileRequestDTO dto
-    ) {
+            @Valid @RequestBody ProfileRequestDTO dto) {
         ProfileDetail profile = profileMapper.toEntity(dto);
         ProfileDetail savedProfile = appUserService.saveProfile(username, profile);
         return ResponseEntity.ok(profileMapper.toDto(savedProfile));

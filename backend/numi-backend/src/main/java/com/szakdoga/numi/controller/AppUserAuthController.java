@@ -1,10 +1,12 @@
 package com.szakdoga.numi.controller;
 
+import com.szakdoga.numi.dto.LoginRequestDTO;
 import com.szakdoga.numi.dto.RegisterRequestDTO;
 import com.szakdoga.numi.dto.UserResponseDTO;
 import com.szakdoga.numi.mapper.UserMapper;
 import com.szakdoga.numi.model.AppUser;
 import com.szakdoga.numi.service.AppUserService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,7 +23,7 @@ public class AppUserAuthController {
 
     // REGISZTRÁCIÓ
     @PostMapping("/register")
-    public UserResponseDTO register(@RequestBody RegisterRequestDTO request) {
+    public UserResponseDTO register(@Valid @RequestBody RegisterRequestDTO request) {
         AppUser userEntity = userMapper.toEntity(request);
         AppUser savedUser = appUserService.registerUser(userEntity);
         return userMapper.toDto(savedUser);
@@ -29,11 +31,8 @@ public class AppUserAuthController {
 
     // BEJELENTKEZÉS
     @PostMapping("/login")
-    public UserResponseDTO login(@RequestBody AppUser loginAdatok) {
-        AppUser user = appUserService.login(
-                loginAdatok.getUsername(),
-                loginAdatok.getPassword()
-        );
+    public UserResponseDTO login(@Valid @RequestBody LoginRequestDTO request) {
+        AppUser user = appUserService.login(request.getUsername(), request.getPassword());
         return userMapper.toDto(user);
     }
 

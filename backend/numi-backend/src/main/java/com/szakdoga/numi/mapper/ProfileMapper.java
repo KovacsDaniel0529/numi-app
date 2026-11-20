@@ -44,6 +44,7 @@ public class ProfileMapper {
         dto.setDietaryPreference(profile.getDietaryPreference());
         dto.setDailyWaterGoalMl(profile.getDailyWaterGoalMl());
         dto.setAllergies(profile.getAllergies());
+        dto.setDigestiveIssues(profile.getDigestiveIssues()); // ÚJ
         return dto;
     }
 }
