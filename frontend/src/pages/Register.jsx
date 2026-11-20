@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { User, Mail, Lock, ArrowRight, ShieldCheck } from "lucide-react";
 import { register } from "../api/authApi";
+import { validateRegistration } from "../utils/validation";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -11,8 +12,9 @@ const Register = () => {
     email: "",
     password: "",
   });
-  const [confirmPassword, setConfirmPassword] = useState(""); // Új állapot a megerősítéshez
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -22,18 +24,28 @@ const Register = () => {
     e.preventDefault();
     setError(null);
 
-    // Jelszó egyezőség ellenőrzése kliens oldalon
-    if (formData.password !== confirmPassword) {
-      setError("A két jelszó nem egyezik meg!");
+    // A felhasználónévből és az emailből eltávolítjuk a felesleges szóközöket
+    const data = {
+      username: formData.username.trim(),
+      email: formData.email.trim(),
+      password: formData.password,
+    };
+
+    const validationError = validateRegistration({ ...data, confirmPassword });
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
+    setSubmitting(true);
     try {
-      await register(formData);
-      alert("Sikeres regisztráció! Most lépj be.");
-      navigate("/login");
+      await register(data);
+      // A sikerüzenetet a belépő oldal jeleníti meg (nincs felugró ablak)
+      navigate("/login", { state: { registered: true } });
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -69,7 +81,10 @@ const Register = () => {
               type="text"
               name="username"
               placeholder="Felhasználónév"
+              value={formData.username}
               onChange={handleChange}
+              maxLength={30}
+              autoComplete="username"
               required
               className="w-full bg-[#1a1f26] border border-white/10 p-4 pl-12 rounded-2xl text-white outline-none focus:border-[#68D391] transition-all font-lemon"
             />
@@ -80,8 +95,11 @@ const Register = () => {
             <input
               type="email"
               name="email"
-              onChange={handleChange}
               placeholder="Email cím"
+              value={formData.email}
+              onChange={handleChange}
+              maxLength={100}
+              autoComplete="email"
               required
               className="w-full bg-[#1a1f26] border border-white/10 p-4 pl-12 rounded-2xl text-white outline-none focus:border-[#68D391] transition-all font-lemon"
             />
@@ -92,14 +110,15 @@ const Register = () => {
             <input
               type="password"
               name="password"
+              placeholder="Jelszó (legalább 6 karakter)"
+              value={formData.password}
               onChange={handleChange}
-              placeholder="Jelszó"
+              autoComplete="new-password"
               required
               className="w-full bg-[#1a1f26] border border-white/10 p-4 pl-12 rounded-2xl text-white outline-none focus:border-[#68D391] transition-all font-lemon"
             />
           </div>
 
-          {/* JELSZÓ MEGERŐSÍTÉSE MEZŐ */}
           <div className="relative group">
             <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-[#68D391] transition-colors" />
             <input
@@ -107,6 +126,7 @@ const Register = () => {
               placeholder="Jelszó újra"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
               required
               className="w-full bg-[#1a1f26] border border-white/10 p-4 pl-12 rounded-2xl text-white outline-none focus:border-[#68D391] transition-all font-lemon"
             />
@@ -114,10 +134,13 @@ const Register = () => {
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-[#68D391] to-teal-500 text-white py-4 rounded-2xl font-lemon text-lg uppercase tracking-widest shadow-[0_0_20px_rgba(104,211,145,0.3)] hover:shadow-[0_0_30px_rgba(104,211,145,0.5)] transition-all flex items-center justify-center gap-2 group active:scale-95"
+            disabled={submitting}
+            className="w-full bg-gradient-to-r from-[#68D391] to-teal-500 text-white py-4 rounded-2xl font-lemon text-lg uppercase tracking-widest shadow-[0_0_20px_rgba(104,211,145,0.3)] hover:shadow-[0_0_30px_rgba(104,211,145,0.5)] transition-all flex items-center justify-center gap-2 group active:scale-95 disabled:opacity-60"
           >
-            Regisztráció
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            {submitting ? "Folyamatban..." : "Regisztráció"}
+            {!submitting && (
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            )}
           </button>
         </form>
 

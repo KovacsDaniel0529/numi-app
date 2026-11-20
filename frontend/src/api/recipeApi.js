@@ -6,3 +6,25 @@ export const generateRecipe = (username, preferences) =>
     method: "POST",
     body: { preferences },
   });
+
+// Mentett receptek
+export const saveRecipe = (username, recipe) =>
+  apiFetch(`/saved-recipes/${encodeURIComponent(username)}`, {
+    method: "POST",
+    body: {
+      title: recipe.title,
+      description: recipe.description,
+      ingredients: recipe.ingredients,
+      steps: recipe.steps,
+      calories: recipe.calories,
+      protein: recipe.protein,
+      carbs: recipe.carbs,
+      fat: recipe.fat,
+    },
+  });
+
+export const getSavedRecipes = (username) =>
+  apiFetch(`/saved-recipes/${encodeURIComponent(username)}`);
+
+export const deleteSavedRecipe = (username, id) =>
+  apiFetch(`/saved-recipes/${encodeURIComponent(username)}/${id}`, { method: "DELETE" });

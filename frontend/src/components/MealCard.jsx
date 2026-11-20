@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, Trash2, ChevronDown } from "lucide-react";
+import { todayLocal } from "../utils/date";
 
 // Az étkezések: az id az URL-hez (/add-food/:mealId), a type a backend MealType enumja.
 // A share azt mondja meg, a napi kalóriacél hány százalékát javasoljuk az étkezésre.
@@ -12,12 +13,13 @@ const MEALS = [
   { id: "snack", type: "SNACK", name: "Nasi", share: 0.1, icon: "/snacks.png" },
 ];
 
-const MealCard = ({ meals = [], calorieGoal = 0, onDeleteEntry }) => {
+const MealCard = ({ meals = [], calorieGoal = 0, date, onDeleteEntry }) => {
   const navigate = useNavigate();
   // Melyik étkezés listája van lenyitva (egyszerre egy). null = egyik sem.
   const [openId, setOpenId] = useState(null);
 
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
+  const dateQuery = date && date !== todayLocal() ? `?date=${date}` : "";
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-md mx-auto p-8 bg-[#171e27] rounded-[40px] shadow-2xl border border-white/5">
@@ -80,7 +82,7 @@ const MealCard = ({ meals = [], calorieGoal = 0, onDeleteEntry }) => {
               </div>
 
               <button
-                onClick={() => navigate(`/add-food/${meal.id}`)}
+                onClick={() => navigate(`/add-food/${meal.id}${dateQuery}`)}
                 className="w-12 h-12 flex items-center justify-center bg-transparent border-2 border-white/20 rounded-xl text-white hover:border-[#68D391] hover:text-[#68D391] transition-all active:scale-95 group"
               >
                 <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />

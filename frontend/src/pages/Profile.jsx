@@ -1,10 +1,11 @@
 import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Scale, Shield, LogOut, ChevronRight, ChartSpline } from "lucide-react";
+import { User, Scale, Shield, LogOut, ChevronRight, ChartSpline, Utensils } from "lucide-react";
 import { UserContext } from "../context/UserContext";
 import GeneralTab from "../components/profile/GeneralTab";
 import BodyTab from "../components/profile/BodyTab";
 import GoalsTab from "../components/profile/GoalsTab";
+import DietTab from "../components/profile/DietTab";
 import SecurityTab from "../components/profile/SecurityTab";
 
 // A Profil oldal csak a keretet és a fülek váltását adja,
@@ -13,6 +14,7 @@ const MENU_ITEMS = [
   { id: "general", label: "Fiók adatai", icon: <User size={20} /> },
   { id: "stats", label: "Testalkat & Súly", icon: <Scale size={20} /> },
   { id: "goals", label: "Céljaim", icon: <ChartSpline size={20} /> },
+  { id: "diet", label: "Étkezési szokások", icon: <Utensils size={20} /> },
   { id: "security", label: "Biztonság", icon: <Shield size={20} /> },
 ];
 
@@ -86,6 +88,7 @@ const Profile = () => {
           {activeTab === "general" && <GeneralTab user={user} refreshUser={refreshUser} />}
           {activeTab === "stats" && <BodyTab user={user} refreshUser={refreshUser} />}
           {activeTab === "goals" && <GoalsTab user={user} refreshUser={refreshUser} />}
+          {activeTab === "diet" && <DietTab user={user} refreshUser={refreshUser} />}
           {activeTab === "security" && <SecurityTab user={user} onAccountDeleted={handleLogout} />}
         </main>
       </div>

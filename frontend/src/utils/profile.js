@@ -11,7 +11,8 @@ export const buildProfilePayload = (profile, overrides = {}) => ({
   activityLevel: profile.activityLevel,
   dietaryPreference: profile.dietaryPreference ?? "omnivore",
   allergies: profile.allergies ?? [],
-  digestiveIssues: [],
+  // Korábban itt üres lista volt, ezért minden mentés kitörölte volna a panaszokat
+  digestiveIssues: profile.digestiveIssues ?? [],
   ...overrides,
 });
 

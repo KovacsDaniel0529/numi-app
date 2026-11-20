@@ -19,6 +19,22 @@ export const ACTIVITY_LEVELS = [
   { value: 1.725, label: "Nagyon aktív" },
 ];
 
+// Az értékeknek egyezniük kell a backend ProfileRequestDTO-ban engedélyezettekkel
+export const DIETARY_PREFERENCES = [
+  { value: "omnivore", label: "Mindenevő" },
+  { value: "vegetarian", label: "Vegetáriánus" },
+  { value: "vegan", label: "Vegán" },
+  { value: "pescatarian", label: "Pescetáriánus" },
+];
+
+export const DIGESTIVE_ISSUES = [
+  { value: "bloating", label: "Puffadás" },
+  { value: "reflux", label: "Reflux" },
+  { value: "ibs", label: "Irritábilis bélrendszer (IBS)" },
+  { value: "constipation", label: "Székrekedés" },
+  { value: "diarrhea", label: "Hasmenésre való hajlam" },
+];
+
 // Visszaadja egy érték feliratát, vagy "Nincs megadva" szöveget
 export const labelOf = (list, value) =>
   list.find((item) => item.value === value)?.label ?? "Nincs megadva";

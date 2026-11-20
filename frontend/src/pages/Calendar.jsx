@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Droplets } from "lucide-react";
 import { UserContext } from "../context/UserContext";
 import { getDay, getMonth } from "../api/calendarApi";
 import { todayLocal } from "../utils/date";
+import { Link } from "react-router-dom";
 
 const MONTH_NAMES = [
   "Január", "Február", "Március", "Április", "Május", "Június",

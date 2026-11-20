@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -13,7 +13,10 @@ import { UserContext } from "../context/UserContext";
 import { getFoods } from "../api/foodApi";
 import { addFoodLog } from "../api/logApi";
 import { allergenLabel } from "../constants/allergens";
-import { todayLocal } from "../utils/date";
+import { formatDateHu, resolveDate, todayLocal } from "../utils/date";
+
+// Ennél nagyobb mennyiséget egy tételnél nem engedünk (elgépelés ellen)
+const MAX_AMOUNT = 5000;
 
 const MEALS = [
   { id: "breakfast", name: "Reggeli", icon: "🍳" },
@@ -29,6 +32,12 @@ const normalize = (text) =>
 export default function AddFood() {
   const { user } = useContext(UserContext);
   const { mealId } = useParams();
+  const [searchParams] = useSearchParams();
+
+  // Melyik napra rögzítünk? Alapból a mai napra, de a Napló a ?date= értékkel
+  // egy korábbi napot is átadhat (pl. /add-food/lunch?date=2026-11-16).
+  const logDate = resolveDate(searchParams.get("date"));
+  const isToday = logDate === todayLocal();
 
   const [selectedMeal, setSelectedMeal] = useState(
     MEALS.some((m) => m.id === mealId) ? mealId : "breakfast",
@@ -42,6 +51,7 @@ export default function AddFood() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedFood, setSelectedFood] = useState(null);
   const [amount, setAmount] = useState(100);
+  const [allergyAck, setAllergyAck] = useState(false); // tudomásul vette-e az allergén figyelmeztetést
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -95,12 +105,19 @@ export default function AddFood() {
   const handleSelectFood = (food) => {
     setSelectedFood(food);
     setAmount(100);
+    setAllergyAck(false);
     setSaveError("");
     setSuccessMessage("");
   };
 
+  // Akkor lehet hozzáadni, ha van kiválasztott étel, érvényes a mennyiség,
+  // és allergén esetén a felhasználó tudomásul vette a figyelmeztetést
+  const amountValid = amount > 0 && amount <= MAX_AMOUNT;
+  const needsAck = Boolean(selectedFood?.allergyWarning);
+  const canAdd = Boolean(selectedFood) && amountValid && (!needsAck || allergyAck);
+
   const handleAdd = async () => {
-    if (!selectedFood || amount <= 0) return;
+    if (!canAdd) return;
 
     setSaving(true);
     setSaveError("");
@@ -110,13 +127,14 @@ export default function AddFood() {
         foodId: selectedFood.id,
         quantityGrams: amount,
         mealType: selectedMeal.toUpperCase(), // breakfast -> BREAKFAST
-        logDate: todayLocal(),
+        logDate,
       });
       setSuccessMessage(
         `Hozzáadva: ${selectedFood.name} (${amount} g) – ${currentMealObj.name}`,
       );
       setSelectedFood(null);
       setAmount(100);
+      setAllergyAck(false);
     } catch (err) {
       setSaveError(err.message);
     } finally {
@@ -138,6 +156,11 @@ export default function AddFood() {
           <p className="text-slate-400 font-lemon text-xs md:text-sm">
             Válassz az alapanyagok közül, és add meg a mennyiséget.
           </p>
+          {!isToday && (
+            <p className="mt-2 inline-block text-xs font-lemon text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-xl">
+              Rögzítés dátuma: {formatDateHu(logDate)}
+            </p>
+          )}
         </div>
 
         <div className="bg-[#171e27]/80 backdrop-blur-md border border-white/5 px-5 py-3 rounded-2xl flex items-center gap-4">
@@ -310,7 +333,10 @@ export default function AddFood() {
             {successMessage && (
               <div className="mb-6 text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-2xl font-lemon space-y-2">
                 <p>{successMessage}</p>
-                <Link to="/diary" className="underline text-xs">
+                <Link
+                  to={isToday ? "/diary" : `/diary?date=${logDate}`}
+                  className="underline text-xs"
+                >
                   Megnyitom a Naplót
                 </Link>
               </div>
@@ -358,8 +384,9 @@ export default function AddFood() {
                     <input
                       type="number"
                       min="1"
+                      max={MAX_AMOUNT}
                       value={amount}
-                      onChange={(e) => setAmount(Number(e.target.value))}
+                      onChange={(e) => setAmount(e.target.value === "" ? "" : Number(e.target.value))}
                       className="w-full bg-[#12181f] border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-[#68D391] transition-all font-lemon text-lg"
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-lemon text-slate-400 uppercase">
@@ -367,6 +394,12 @@ export default function AddFood() {
                     </span>
                   </div>
                 </div>
+
+                {!amountValid && (
+                  <p className="text-xs text-red-400 font-lemon">
+                    A mennyiség 1 és {MAX_AMOUNT} gramm között legyen!
+                  </p>
+                )}
 
                 <div className="bg-[#12181f]/70 border border-white/5 p-4 rounded-2xl space-y-3">
                   <div className="flex justify-between items-center font-lemon">
@@ -394,9 +427,24 @@ export default function AddFood() {
                   </div>
                 </div>
 
+                {needsAck && (
+                  <label className="flex items-start gap-3 text-xs font-lemon text-red-300 bg-red-500/5 border border-red-500/30 p-3 rounded-xl cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={allergyAck}
+                      onChange={(e) => setAllergyAck(e.target.checked)}
+                      className="mt-0.5 accent-red-500"
+                    />
+                    <span>
+                      Tudomásul veszem, hogy ez az étel a profilomban szereplő allergént tartalmaz, és
+                      mégis szeretném rögzíteni.
+                    </span>
+                  </label>
+                )}
+
                 <button
                   type="button"
-                  disabled={amount <= 0 || saving}
+                  disabled={!canAdd || saving}
                   onClick={handleAdd}
                   className="w-full bg-gradient-to-r from-[#68D391] to-teal-500 text-[#12181f] py-4 rounded-2xl font-lemon text-sm uppercase tracking-widest font-bold shadow-[0_0_20px_rgba(104,211,145,0.3)] hover:shadow-[0_0_30px_rgba(104,211,145,0.5)] transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
                 >
